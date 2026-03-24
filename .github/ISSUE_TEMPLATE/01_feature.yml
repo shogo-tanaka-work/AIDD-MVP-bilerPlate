@@ -1,0 +1,46 @@
+name: "\u2728 新機能"
+description: 新しい機能の追加
+labels: ["feature", "claude"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        受入条件を具体的に書いてください。`@claude` が実装します。
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 機能の概要
+      description: 何を作りたいか1〜2行で
+      placeholder: "例: ユーザーがメールアドレスでサインアップできるようにする"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受入条件（完了の定義）
+      value: |
+        - [ ] ○○ができること
+        - [ ] 正常系のテストが通ること
+        - [ ] 異常系（空入力・失敗ケース）のテストが通ること
+        - [ ] 型エラー・リントエラーがないこと
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope_out
+    attributes:
+      label: やらないこと（スコープ外）
+      placeholder: "例: メール認証は実装しない / OAuthは v2 以降"
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - 高（MVP必須）
+        - 中（あると良い）
+        - 低（v2以降）
+    validations:
+      required: true

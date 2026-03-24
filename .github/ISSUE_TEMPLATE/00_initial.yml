@@ -1,0 +1,41 @@
+name: "\U0001F680 プロジェクト初期セットアップ"
+description: 新規MVPのゼロからの立ち上げ。最初に必ず作るイシュー。
+labels: ["initial-setup", "claude"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 使い方
+        1. 下の欄に `docs/SPEC.md` の内容を貼り付ける
+        2. イシューを作成する
+        3. コメントで `@claude 初期セットアップを実行してください` と書く
+        4. Claude がプロジェクト全体を自動構築する
+
+  - type: textarea
+    id: spec_content
+    attributes:
+      label: SPEC.md の内容（コピペ）
+      description: docs/SPEC.md の内容をそのまま貼り付けてください
+      placeholder: |
+        # [アプリ名] MVP仕様
+        ## 目的
+        ## 技術スタック
+        ## コア機能
+        ## やらないこと
+        ## 完了の定義
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: setup_tasks
+    attributes:
+      label: セットアップ内容（Claude が自動実行）
+      description: Claude が以下を自動で行います
+      options:
+        - label: スタックに合わせた src/ の初期ディレクトリ構成を作成
+        - label: package.json / 設定ファイル（tsconfig / eslint 等）を生成
+        - label: CLAUDE.md の基本コマンド欄をスタックに合わせて更新
+        - label: .claude/rules/architecture.md をスタックに合わせて更新
+        - label: .env.example を作成
+        - label: README.md を初期作成
+        - label: 動作確認用のスモークテストを作成

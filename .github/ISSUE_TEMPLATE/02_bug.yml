@@ -1,0 +1,44 @@
+name: "\U0001F41B バグフィックス"
+description: バグの報告・修正依頼
+labels: ["bug", "claude"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        再現手順を明確に書いてください。`@claude` が修正します。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: バグの内容
+      placeholder: "例: ログインフォームで空のメールアドレスを送信するとサーバーエラーになる"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      value: |
+        1. ○○を開く
+        2. ○○を入力する（または空のまま）
+        3. ○○をクリックする
+        4. エラーが発生する
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+      placeholder: "バリデーションエラーメッセージが表示されるべき"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      placeholder: "500 Internal Server Error が返る"
+    validations:
+      required: true

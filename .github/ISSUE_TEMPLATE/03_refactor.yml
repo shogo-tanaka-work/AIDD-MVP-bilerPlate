@@ -1,0 +1,32 @@
+name: "\u267B\uFE0F リファクタリング"
+description: コードの改善・整理（機能変更なし）
+labels: ["refactor", "claude"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        機能の変更はしません。コードの改善のみです。
+
+  - type: textarea
+    id: target
+    attributes:
+      label: 対象ファイル・範囲
+      placeholder: "例: src/lib/auth.ts の関数が200行を超えているので分割したい"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 改善の理由
+      placeholder: "例: 可読性が低くテストが書きにくいため"
+    validations:
+      required: true
+
+  - type: textarea
+    id: criteria
+    attributes:
+      label: 完了の定義
+      value: |
+        - [ ] 既存のテストがすべて通ること（機能の変化がないこと）
+        - [ ] 型エラー・リントエラーがないこと

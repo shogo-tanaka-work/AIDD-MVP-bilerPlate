@@ -1,0 +1,39 @@
+name: Claude Code Review
+
+on:
+  pull_request_review_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR番号'
+        required: true
+        type: number
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    if: |
+      github.actor != 'claude[bot]' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        contains(github.event.comment.body, '@claude-review')
+      )
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Claude Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 読み取り専用（Write / Edit 系は含めない）
+          allowed_tools: |
+            Bash(git diff *),
+            Bash(git log *),
+            Read,Glob,Grep
+          custom_instructions: |
+            .claude/agents/code-reviewer.md の基準でレビューしてください。
+            コードを変更せず、コメントでフィードバックのみ行ってください。
