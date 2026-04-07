@@ -20,7 +20,18 @@ cd my-new-app
 > **前提:** `gh`（GitHub CLI）がインストール・認証済みであること。
 > 未認証の場合は先に `gh auth login` を実行してください。
 
-### 2. SPEC.md を書く（15〜30分）
+### 2. GitHubリポジトリを設定する（5分）
+
+`docs/GITHUB_SETUP.md` に従い、以下を設定する:
+
+- mainブランチの保護（Rulesets）
+- マージ戦略（Squash merge のみ）
+- Dependabot有効化
+- ANTHROPIC_API_KEY Secret（Claude Code Action使用時）
+
+> これらはリポジトリのコードに含まれないため、プロジェクトごとに手動設定が必要。
+
+### 3. SPEC.md を書く（15～30分）
 
 `docs/SPEC.md` を開き、以下を埋める:
 
@@ -32,7 +43,7 @@ cd my-new-app
 
 **これが最も重要なステップ。** SPEC.md がないまま実装を始めてはいけない。
 
-### 3. AIエージェントに投げる
+### 4. AIエージェントに投げる
 
 #### Claude Code（CLI）の場合
 

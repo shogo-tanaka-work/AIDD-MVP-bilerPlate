@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # npm 依存パッケージ（スタックに応じて package-ecosystem を変更）
+  # Python: "pip" / Rust: "cargo" / Go: "gomod"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+
+  # GitHub Actions のバージョン更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
