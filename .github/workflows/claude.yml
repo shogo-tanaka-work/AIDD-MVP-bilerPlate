@@ -45,7 +45,7 @@ jobs:
       - run: npm ci
 
       - name: Run Claude Code
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@v1.0.183
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # 許可コマンドを明示的にホワイトリスト指定（セキュリティ上必須）
