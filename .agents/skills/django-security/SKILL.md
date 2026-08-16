@@ -1,57 +1,57 @@
 ---
 name: django-security
-description: Django security best practices, authentication, authorization, CSRF protection, SQL injection prevention, XSS prevention, and secure deployment configurations. Use when reviewing Django authentication, authorization, input handling, or deployment settings.
+description: Djangoのセキュリティベストプラクティス、認証、認可、CSRF対策、SQL injection対策、XSS対策、安全なdeploy設定。Djangoの認証・認可・入力処理・deploy設定をレビューするときに使う。
 metadata:
   origin: ECC
 ---
 
-# Django Security Best Practices
+# Djangoセキュリティベストプラクティス
 
-Comprehensive security guidelines for Django applications to protect against common vulnerabilities.
+一般的な脆弱性からDjangoアプリケーションを守るための包括的なセキュリティガイドライン。
 
-## When to Activate
+## 発動タイミング
 
-- Setting up Django authentication and authorization
-- Implementing user permissions and roles
-- Configuring production security settings
-- Reviewing Django application for security issues
-- Deploying Django applications to production
+- Djangoの認証・認可を設定するとき
+- ユーザーの権限とroleを実装するとき
+- 本番のセキュリティ設定を構成するとき
+- Djangoアプリケーションのセキュリティ問題をレビューするとき
+- Djangoアプリケーションを本番へdeployするとき
 
-## Core Security Settings
+## 中核のセキュリティ設定
 
-### Production Settings Configuration
+### 本番設定の構成
 
 ```python
 # settings/production.py
 import os
 
-DEBUG = False  # CRITICAL: Never use True in production
+DEBUG = False  # 重要: 本番でTrueにしない
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
-# Security headers
+# セキュリティヘッダ
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_SECONDS = 31536000  # 1年
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# HTTPS and Cookies
+# HTTPSとCookie
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-# Secret key (must be set via environment variable)
+# secret key（環境変数で設定する）
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     raise ImproperlyConfigured('DJANGO_SECRET_KEY environment variable is required')
 
-# Password validation
+# パスワード検証
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -71,9 +71,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 ```
 
-## Authentication
+## 認証
 
-### Custom User Model
+### カスタムUser model
 
 ```python
 # apps/users/models.py
@@ -81,12 +81,12 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class User(AbstractUser):
-    """Custom user model for better security."""
+    """セキュリティを高めるためのカスタムuser model。"""
 
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
 
-    USERNAME_FIELD = 'email'  # Use email as username
+    USERNAME_FIELD = 'email'  # emailをusernameとして使う
     REQUIRED_FIELDS = ['username']
 
     class Meta:
@@ -101,10 +101,10 @@ class User(AbstractUser):
 AUTH_USER_MODEL = 'users.User'
 ```
 
-### Password Hashing
+### パスワードのhash化
 
 ```python
-# Django uses PBKDF2 by default. For stronger security:
+# Djangoは既定でPBKDF2を使う。より強固にするなら:
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -113,20 +113,20 @@ PASSWORD_HASHERS = [
 ]
 ```
 
-### Session Management
+### session管理
 
 ```python
-# Session configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'  # Or 'db'
+# session設定
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'  # または'db'
 SESSION_CACHE_ALIAS = 'default'
-SESSION_COOKIE_AGE = 3600 * 24 * 7  # 1 week
+SESSION_COOKIE_AGE = 3600 * 24 * 7  # 1週間
 SESSION_SAVE_EVERY_REQUEST = False
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Better UX, but less secure
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # UXは良いが安全性は下がる
 ```
 
-## Authorization
+## 認可
 
-### Permissions
+### 権限
 
 ```python
 # models.py
@@ -145,7 +145,7 @@ class Post(models.Model):
         ]
 
     def user_can_edit(self, user):
-        """Check if user can edit this post."""
+        """このpostをuserが編集できるか判定する。"""
         return self.author == user or user.has_perm('app.can_edit_others')
 
 # views.py
@@ -155,32 +155,32 @@ from django.views.generic import UpdateView
 class PostUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Post
     permission_required = 'app.can_edit_others'
-    raise_exception = True  # Return 403 instead of redirect
+    raise_exception = True  # redirectではなく403を返す
 
     def get_queryset(self):
-        """Only allow users to edit their own posts."""
+        """自分のpostだけ編集を許可する。"""
         return Post.objects.filter(author=self.request.user)
 ```
 
-### Custom Permissions
+### カスタム権限
 
 ```python
 # permissions.py
 from rest_framework import permissions
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
-    """Allow only owners to edit objects."""
+    """所有者だけにobjectの編集を許可する。"""
 
     def has_object_permission(self, request, view, obj):
-        # Read permissions allowed for any request
+        # 読み取り権限はどのrequestでも許可
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Write permissions only for owner
+        # 書き込み権限は所有者のみ
         return obj.author == request.user
 
 class IsAdminOrReadOnly(permissions.BasePermission):
-    """Allow admins to do anything, others read-only."""
+    """adminには全操作を、他は読み取りのみを許可する。"""
 
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
@@ -188,7 +188,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         return request.user and request.user.is_staff
 
 class IsVerifiedUser(permissions.BasePermission):
-    """Allow only verified users."""
+    """検証済みuserだけを許可する。"""
 
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.is_verified
@@ -214,9 +214,9 @@ class User(AbstractUser):
     def is_moderator(self):
         return self.role in ['admin', 'moderator']
 
-# Mixins
+# Mixin
 class AdminRequiredMixin:
-    """Mixin to require admin role."""
+    """admin roleを要求するmixin。"""
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated or not request.user.is_admin():
@@ -225,97 +225,97 @@ class AdminRequiredMixin:
         return super().dispatch(request, *args, **kwargs)
 ```
 
-## SQL Injection Prevention
+## SQL injection対策
 
-### Django ORM Protection
+### Django ORMによる保護
 
 ```python
-# GOOD: Django ORM automatically escapes parameters
+# GOOD: Django ORMはparameterを自動でescapeする
 def get_user(username):
-    return User.objects.get(username=username)  # Safe
+    return User.objects.get(username=username)  # 安全
 
-# GOOD: Using parameters with raw()
+# GOOD: raw()ではparameterを使う
 def search_users(query):
     return User.objects.raw('SELECT * FROM users WHERE username = %s', [query])
 
-# BAD: Never directly interpolate user input
+# BAD: ユーザー入力を直接埋め込まない
 def get_user_bad(username):
-    return User.objects.raw(f'SELECT * FROM users WHERE username = {username}')  # VULNERABLE!
+    return User.objects.raw(f'SELECT * FROM users WHERE username = {username}')  # 脆弱!
 
-# GOOD: Using filter with proper escaping
+# GOOD: filterは適切にescapeされる
 def get_users_by_email(email):
-    return User.objects.filter(email__iexact=email)  # Safe
+    return User.objects.filter(email__iexact=email)  # 安全
 
-# GOOD: Using Q objects for complex queries
+# GOOD: 複雑なqueryにはQ objectを使う
 from django.db.models import Q
 def search_users_complex(query):
     return User.objects.filter(
         Q(username__icontains=query) |
         Q(email__icontains=query)
-    )  # Safe
+    )  # 安全
 ```
 
-### Extra Security with raw()
+### raw()での追加の安全対策
 
 ```python
-# If you must use raw SQL, always use parameters
+# raw SQLが必要な場合は必ずparameterを使う
 User.objects.raw(
     'SELECT * FROM users WHERE email = %s AND status = %s',
     [user_input_email, status]
 )
 ```
 
-## XSS Prevention
+## XSS対策
 
-### Template Escaping
+### templateのescape
 
 ```django
-{# Django auto-escapes variables by default - SAFE #}
-{{ user_input }}  {# Escaped HTML #}
+{# Djangoは既定で変数を自動escapeする - 安全 #}
+{{ user_input }}  {# escapeされたHTML #}
 
-{# Explicitly mark safe only for trusted content #}
-{{ trusted_html|safe }}  {# Not escaped #}
+{# 信頼できる内容だけ明示的にsafeにする #}
+{{ trusted_html|safe }}  {# escapeされない #}
 
-{# Use template filters for safe HTML #}
-{{ user_input|escape }}  {# Same as default #}
-{{ user_input|striptags }}  {# Remove all HTML tags #}
+{# 安全なHTMLのためのtemplate filter #}
+{{ user_input|escape }}  {# 既定と同じ #}
+{{ user_input|striptags }}  {# HTMLタグをすべて除去 #}
 
-{# JavaScript escaping #}
+{# JavaScriptのescape #}
 <script>
     var username = {{ username|escapejs }};
 </script>
 ```
 
-### Safe String Handling
+### 安全な文字列の扱い
 
 ```python
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-# BAD: Never mark user input as safe without escaping
+# BAD: escapeせずにユーザー入力をsafe扱いしない
 def render_bad(user_input):
-    return mark_safe(user_input)  # VULNERABLE!
+    return mark_safe(user_input)  # 脆弱!
 
-# GOOD: Escape first, then mark safe
+# GOOD: 先にescapeしてからsafeにする
 def render_good(user_input):
     return mark_safe(escape(user_input))
 
-# GOOD: Use format_html for HTML with variables
+# GOOD: 変数を含むHTMLにはformat_htmlを使う
 from django.utils.html import format_html
 
 def greet_user(username):
     return format_html('<span class="user">{}</span>', escape(username))
 ```
 
-### HTTP Headers
+### HTTPヘッダ
 
 ```python
 # settings.py
-SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME sniffing
-SECURE_BROWSER_XSS_FILTER = True  # Enable XSS filter
-X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking
+SECURE_CONTENT_TYPE_NOSNIFF = True  # MIME sniffingを防ぐ
+SECURE_BROWSER_XSS_FILTER = True  # XSS filterを有効化
+X_FRAME_OPTIONS = 'DENY'  # clickjackingを防ぐ
 
-# Custom middleware
+# カスタムmiddleware
 from django.conf import settings
 
 class SecurityHeaderMiddleware:
@@ -331,25 +331,25 @@ class SecurityHeaderMiddleware:
         return response
 ```
 
-## CSRF Protection
+## CSRF対策
 
-### Default CSRF Protection
+### 既定のCSRF保護
 
 ```python
-# settings.py - CSRF is enabled by default
-CSRF_COOKIE_SECURE = True  # Only send over HTTPS
-CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access
-CSRF_COOKIE_SAMESITE = 'Lax'  # Prevent CSRF in some cases
-CSRF_TRUSTED_ORIGINS = ['https://example.com']  # Trusted domains
+# settings.py - CSRFは既定で有効
+CSRF_COOKIE_SECURE = True  # HTTPSでのみ送信
+CSRF_COOKIE_HTTPONLY = True  # JavaScriptからのアクセスを防ぐ
+CSRF_COOKIE_SAMESITE = 'Lax'  # 一部のCSRFを防ぐ
+CSRF_TRUSTED_ORIGINS = ['https://example.com']  # 信頼するdomain
 
-# Template usage
+# templateでの利用
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Submit</button>
 </form>
 
-# AJAX requests
+# AJAX request
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -375,20 +375,20 @@ fetch('/api/endpoint/', {
 });
 ```
 
-### Exempting Views (Use Carefully)
+### viewの除外（慎重に使う）
 
 ```python
 from django.views.decorators.csrf import csrf_exempt
 
-@csrf_exempt  # Only use when absolutely necessary!
+@csrf_exempt  # どうしても必要なときだけ使う!
 def webhook_view(request):
-    # Webhook from external service
+    # 外部serviceからのwebhook
     pass
 ```
 
-## File Upload Security
+## ファイルアップロードのセキュリティ
 
-### File Validation
+### ファイルの検証
 
 ```python
 import os
@@ -407,7 +407,7 @@ MIME_TO_EXTENSIONS = {
 }
 
 def validate_file_type(value):
-    """Validate file type using magic bytes and cross-check extension."""
+    """magic bytesでファイル種別を検証し、拡張子と突き合わせる。"""
     mime = magic.from_buffer(value.read(2048), mime=True)
     value.seek(0)
 
@@ -419,7 +419,7 @@ def validate_file_type(value):
         raise ValidationError('File extension does not match file content.')
 
 def validate_file_size(value):
-    """Validate file size (max 5MB)."""
+    """ファイルサイズを検証する（最大5MB）。"""
     if value.size > 5 * 1024 * 1024:
         raise ValidationError('File too large. Max size is 5MB.')
 
@@ -432,8 +432,8 @@ class Document(models.Model):
 
 ```
 
-For environments where installing libmagic is difficult (e.g., minimal containers),
-use the pure-Python `filetype` package as an alternative:
+libmagicの導入が難しい環境（最小構成のcontainerなど）では、
+pure-Pythonの`filetype`パッケージを代替に使う。
 
 ```python
 import os
@@ -453,7 +453,7 @@ MIME_TO_EXTENSIONS = {
 }
 
 def validate_file_type(value):
-    """Validate file type using magic bytes."""
+    """magic bytesでファイル種別を検証する。"""
     kind = filetype.guess(value.read(2048))
     value.seek(0)
 
@@ -465,24 +465,24 @@ def validate_file_type(value):
         raise ValidationError('File extension does not match file content.')
 ```
 
-### Secure File Storage
+### 安全なファイル保存
 
 ```python
 # settings.py
 MEDIA_ROOT = '/var/www/media/'
 MEDIA_URL = '/media/'
 
-# Use a separate domain for media in production
+# 本番ではmedia用に別domainを使う
 MEDIA_DOMAIN = 'https://media.example.com'
 
-# Don't serve user uploads directly
-# Use whitenoise or a CDN for static files
-# Use a separate server or S3 for media files
+# ユーザーのアップロードを直接配信しない
+# static fileにはwhitenoiseまたはCDNを使う
+# media fileには別serverまたはS3を使う
 ```
 
-## API Security
+## APIのセキュリティ
 
-### Rate Limiting
+### rate limiting
 
 ```python
 # settings.py
@@ -498,7 +498,7 @@ REST_FRAMEWORK = {
     }
 }
 
-# Custom throttle
+# カスタムthrottle
 from rest_framework.throttling import UserRateThrottle
 
 class BurstRateThrottle(UserRateThrottle):
@@ -510,7 +510,7 @@ class SustainedRateThrottle(UserRateThrottle):
     rate = '1000/day'
 ```
 
-### Authentication for APIs
+### APIの認証
 
 ```python
 # settings.py
@@ -535,7 +535,7 @@ def protected_view(request):
     return Response({'message': 'You are authenticated'})
 ```
 
-## Security Headers
+## セキュリティヘッダ
 
 ### Content Security Policy
 
@@ -564,34 +564,34 @@ class CSPMiddleware:
         return response
 ```
 
-## Environment Variables
+## 環境変数
 
-### Managing Secrets
+### 秘密情報の管理
 
 ```python
-# Use python-decouple or django-environ
+# python-decoupleまたはdjango-environを使う
 import environ
 
 env = environ.Env(
-    # set casting, default value
+    # 型変換と既定値を設定する
     DEBUG=(bool, False)
 )
 
-# reading .env file
+# .envファイルの読み込み
 environ.Env.read_env()
 
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 DATABASE_URL = env('DATABASE_URL')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
-# .env file (never commit this)
+# .envファイル（絶対にcommitしない）
 DEBUG=False
 SECRET_KEY=your-secret-key-here
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 ALLOWED_HOSTS=example.com,www.example.com
 ```
 
-## Logging Security Events
+## セキュリティイベントのログ
 
 ```python
 # settings.py
@@ -624,21 +624,21 @@ LOGGING = {
 }
 ```
 
-## Quick Security Checklist
+## セキュリティ簡易チェックリスト
 
-| Check | Description |
+| 項目 | 説明 |
 |-------|-------------|
-| `DEBUG = False` | Never run with DEBUG in production |
-| HTTPS only | Force SSL, secure cookies |
-| Strong secrets | Use environment variables for SECRET_KEY |
-| Password validation | Enable all password validators |
-| CSRF protection | Enabled by default, don't disable |
-| XSS prevention | Django auto-escapes, don't use `&#124;safe` with user input |
-| SQL injection | Use ORM, never concatenate strings in queries |
-| File uploads | Validate file type and size |
-| Rate limiting | Throttle API endpoints |
-| Security headers | CSP, X-Frame-Options, HSTS |
-| Logging | Log security events |
-| Updates | Keep Django and dependencies updated |
+| `DEBUG = False` | 本番でDEBUGを有効にしない |
+| HTTPSのみ | SSLを強制し、cookieをsecureにする |
+| 強固な秘密情報 | SECRET_KEYは環境変数で渡す |
+| パスワード検証 | すべてのvalidatorを有効にする |
+| CSRF対策 | 既定で有効。無効化しない |
+| XSS対策 | Djangoは自動escapeする。ユーザー入力に`&#124;safe`を使わない |
+| SQL injection | ORMを使い、queryで文字列連結をしない |
+| ファイルアップロード | 種別とサイズを検証する |
+| rate limiting | API endpointをthrottleする |
+| セキュリティヘッダ | CSP、X-Frame-Options、HSTS |
+| ログ | セキュリティイベントを記録する |
+| 更新 | Djangoと依存を最新に保つ |
 
-Remember: Security is a process, not a product. Regularly review and update your security practices.
+留意点: セキュリティは製品ではなくプロセスである。定期的にセキュリティ運用を見直して更新する。

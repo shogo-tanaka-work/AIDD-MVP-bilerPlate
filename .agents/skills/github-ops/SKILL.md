@@ -1,145 +1,145 @@
 ---
 name: github-ops
-description: GitHub repository operations, automation, and management. Issue triage, PR management, CI/CD operations, release management, and security monitoring using the gh CLI. Use when the user wants to manage GitHub issues, PRs, CI status, releases, contributors, stale items, or any GitHub operational task beyond simple git commands.
+description: GitHubリポジトリの運用・自動化・管理。gh CLIを使ったissue triage、PR管理、CI/CD運用、release管理、セキュリティ監視。GitHubのissue・PR・CI状況・release・contributor・停滞item、その他単純なgitコマンドを超えるGitHub運用タスクを扱いたいときに使う。
 metadata:
   origin: ECC
 ---
 
-# GitHub Operations
+# GitHub運用
 
-Manage GitHub repositories with a focus on community health, CI reliability, and contributor experience.
+community health、CIの信頼性、contributor体験を重視してGitHubリポジトリを管理する。
 
-## When to Activate
+## 発動タイミング
 
-- Triaging issues (classifying, labeling, responding, deduplicating)
-- Managing PRs (review status, CI checks, stale PRs, merge readiness)
-- Debugging CI/CD failures
-- Preparing releases and changelogs
-- Monitoring Dependabot and security alerts
-- Managing contributor experience on open-source projects
-- User says "check GitHub", "triage issues", "review PRs", "merge", "release", "CI is broken"
+- issueのtriage（分類、labeling、返信、重複判定）
+- PRの管理（レビュー状況、CI check、停滞PR、merge可否）
+- CI/CD失敗のdebug
+- releaseとchangelogの準備
+- Dependabotとセキュリティalertの監視
+- open-source projectでのcontributor体験の管理
+- ユーザーが「GitHubを見て」「issueをtriageして」「PRをレビューして」「merge」「release」「CIが壊れている」と言ったとき
 
-## Tool Requirements
+## ツール要件
 
-- **gh CLI** for all GitHub API operations
-- Repository access configured via `gh auth login`
+- すべてのGitHub API操作に**gh CLI**を使う
+- `gh auth login`でリポジトリアクセスを設定しておく
 
-## Issue Triage
+## Issue triage
 
-Classify each issue by type and priority:
+各issueを種別と優先度で分類する。
 
-**Types:** bug, feature-request, question, documentation, enhancement, duplicate, invalid, good-first-issue
+**種別:** bug, feature-request, question, documentation, enhancement, duplicate, invalid, good-first-issue
 
-**Priority:** critical (breaking/security), high (significant impact), medium (nice to have), low (cosmetic)
+**優先度:** critical（破壊的／セキュリティ）、high（影響大）、medium（あると良い）、low（見た目のみ）
 
-### Triage Workflow
+### Triageの流れ
 
-1. Read the issue title, body, and comments
-2. Check if it duplicates an existing issue (search by keywords)
-3. Apply appropriate labels via `gh issue edit --add-label`
-4. For questions: draft and post a helpful response
-5. For bugs needing more info: ask for reproduction steps
-6. For good first issues: add `good-first-issue` label
-7. For duplicates: comment with link to original, add `duplicate` label
+1. issueのtitle、body、commentを読む
+2. 既存issueと重複していないか確認する（keywordで検索）
+3. `gh issue edit --add-label`で適切なlabelを付ける
+4. 質問の場合: 有用な回答を作成して投稿する
+5. 情報不足のbugの場合: 再現手順を尋ねる
+6. good first issueの場合: `good-first-issue` labelを付ける
+7. 重複の場合: 元issueへのリンクをcommentし、`duplicate` labelを付ける
 
 ```bash
-# Search for potential duplicates
+# 重複候補を検索する
 gh issue list --search "keyword" --state all --limit 20
 
-# Add labels
+# labelを付ける
 gh issue edit <number> --add-label "bug,high-priority"
 
-# Comment on issue
+# issueにcommentする
 gh issue comment <number> --body "Thanks for reporting. Could you share reproduction steps?"
 ```
 
-## PR Management
+## PR管理
 
-### Review Checklist
+### レビューチェックリスト
 
-1. Check CI status: `gh pr checks <number>`
-2. Check if mergeable: `gh pr view <number> --json mergeable`
-3. Check age and last activity
-4. Flag PRs >5 days with no review
-5. For community PRs: ensure they have tests and follow conventions
+1. CI状況を確認する: `gh pr checks <number>`
+2. merge可能か確認する: `gh pr view <number> --json mergeable`
+3. 経過日数と最終活動を確認する
+4. 5日以上レビューが付いていないPRを洗い出す
+5. community PRの場合: testがあり規約に沿っているか確認する
 
-### Stale Policy
+### 停滞ポリシー
 
-- Issues with no activity in 14+ days: add `stale` label, comment asking for update
-- PRs with no activity in 7+ days: comment asking if still active
-- Auto-close stale issues after 30 days with no response (add `closed-stale` label)
+- 14日以上活動のないissue: `stale` labelを付け、状況を尋ねるcommentをする
+- 7日以上活動のないPR: まだ進行中か尋ねるcommentをする
+- 30日応答のない停滞issueは自動closeする（`closed-stale` labelを付ける）
 
 ```bash
-# Find stale issues (no activity in 14+ days)
+# 停滞issueを探す（14日以上活動なし）
 gh issue list --label "stale" --state open
 
-# Find PRs with no recent activity
+# 直近の活動がないPRを探す
 gh pr list --json number,title,updatedAt --jq '.[] | select(.updatedAt < "2026-03-01")'
 ```
 
-## CI/CD Operations
+## CI/CD運用
 
-When CI fails:
+CIが失敗したとき:
 
-1. Check the workflow run: `gh run view <run-id> --log-failed`
-2. Identify the failing step
-3. Check if it is a flaky test vs real failure
-4. For real failures: identify the root cause and suggest a fix
-5. For flaky tests: note the pattern for future investigation
+1. workflow runを確認する: `gh run view <run-id> --log-failed`
+2. 失敗したstepを特定する
+3. flaky testか実際の失敗かを判断する
+4. 実際の失敗の場合: 根本原因を特定し修正案を示す
+5. flaky testの場合: 後の調査に向けてパターンを記録する
 
 ```bash
-# List recent failed runs
+# 直近の失敗runを一覧する
 gh run list --status failure --limit 10
 
-# View failed run logs
+# 失敗したrunのlogを見る
 gh run view <run-id> --log-failed
 
-# Re-run a failed workflow
+# 失敗したworkflowを再実行する
 gh run rerun <run-id> --failed
 ```
 
-## Release Management
+## Release管理
 
-When preparing a release:
+releaseを準備するとき:
 
-1. Check all CI is green on main
-2. Review unreleased changes: `gh pr list --state merged --base main`
-3. Generate changelog from PR titles
-4. Create release: `gh release create`
+1. mainのCIがすべてgreenか確認する
+2. 未releaseの変更を確認する: `gh pr list --state merged --base main`
+3. PR titleからchangelogを生成する
+4. releaseを作成する: `gh release create`
 
 ```bash
-# List merged PRs since last release
+# 前回release以降にmergeされたPRを一覧する
 gh pr list --state merged --base main --search "merged:>2026-03-01"
 
-# Create a release
+# releaseを作成する
 gh release create v1.2.0 --title "v1.2.0" --generate-notes
 
-# Create a pre-release
+# pre-releaseを作成する
 gh release create v1.3.0-rc1 --prerelease --title "v1.3.0 Release Candidate 1"
 ```
 
-## Security Monitoring
+## セキュリティ監視
 
 ```bash
-# Check Dependabot alerts
+# Dependabot alertを確認する
 gh api repos/{owner}/{repo}/dependabot/alerts --jq '.[].security_advisory.summary'
 
-# Check secret scanning alerts
+# secret scanning alertを確認する
 gh api repos/{owner}/{repo}/secret-scanning/alerts --jq '.[].state'
 
-# Review and auto-merge safe dependency bumps
+# 安全な依存更新をレビューして自動mergeする
 gh pr list --label "dependencies" --json number,title
 ```
 
-- Review and auto-merge safe dependency bumps
-- Flag any critical/high severity alerts immediately
-- Check for new Dependabot alerts weekly at minimum
+- 安全な依存更新をレビューして自動mergeする
+- critical/high severityのalertは直ちに報告する
+- Dependabot alertは最低でも週次で確認する
 
-## Quality Gate
+## 品質ゲート
 
-Before completing any GitHub operations task:
-- all issues triaged have appropriate labels
-- no PRs older than 7 days without a review or comment
-- CI failures have been investigated (not just re-run)
-- releases include accurate changelogs
-- security alerts are acknowledged and tracked
+GitHub運用タスクを完了する前に:
+- triageしたissueすべてに適切なlabelが付いている
+- レビューもcommentも無いまま7日以上経過したPRが無い
+- CI失敗を調査済み（単に再実行しただけではない）
+- releaseに正確なchangelogが含まれている
+- セキュリティalertを確認し追跡している

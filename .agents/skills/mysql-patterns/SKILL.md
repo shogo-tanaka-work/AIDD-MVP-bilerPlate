@@ -1,46 +1,45 @@
 ---
 name: mysql-patterns
-description: MySQL and MariaDB schema, query, indexing, transaction, replication, and connection-pool patterns for production backends. Use when designing MySQL or MariaDB schemas and indexes, or when a query, transaction, or replica lags.
+description: 本番backend向けのMySQL・MariaDBのschema、query、index、transaction、replication、connection poolのパターン。MySQLやMariaDBのschemaとindexを設計するとき、またはquery・transaction・replicaに遅延があるときに使う。
 metadata:
   origin: ECC
 ---
 
 # MySQL Patterns
 
-Use this skill when working on MySQL or MariaDB schema design, migrations,
-slow-query investigation, queue-style transactions, connection pools, or
-production database configuration. Prefer exact version checks before applying a
-feature-specific pattern because MySQL and MariaDB have diverged in several SQL
-details.
+MySQLまたはMariaDBのschema設計、migration、slow queryの調査、queue形式の
+transaction、connection pool、本番databaseの設定に取り組むときにこのスキルを使う。
+MySQLとMariaDBはいくつかのSQLの詳細で分岐しているため、機能固有のパターンを
+適用する前に正確なバージョンを確認する。
 
-## Activation
+## 発動条件
 
-- Designing MySQL or MariaDB tables, indexes, and constraints
-- Reviewing migrations before they run on large production tables
-- Debugging slow queries, lock waits, deadlocks, or connection exhaustion
-- Adding keyset pagination, upserts, full-text search, JSON columns, or queues
-- Configuring application connection pools, read replicas, TLS, or slow logs
+- MySQLまたはMariaDBのtable、index、constraintを設計するとき
+- 大きな本番tableで実行する前のmigrationをレビューするとき
+- slow query、lock wait、deadlock、connection枯渇をデバッグするとき
+- keyset pagination、upsert、full-text search、JSON column、queueを追加するとき
+- アプリケーションのconnection pool、read replica、TLS、slow logを設定するとき
 
-## Version Check
+## バージョン確認
 
-Start by identifying the engine and version:
+まずエンジンとバージョンを特定する。
 
 ```sql
 SELECT VERSION();
 SHOW VARIABLES LIKE 'version_comment';
 ```
 
-Keep MySQL and MariaDB guidance separate when syntax differs:
+構文が異なる場合、MySQLとMariaDBの指針を分けて扱う。
 
-- MySQL documents row aliases as the replacement for `VALUES(col)` in
-  `ON DUPLICATE KEY UPDATE`; `VALUES(col)` is deprecated there.
-- MariaDB documents `VALUES(col)` as the supported way to reference inserted
-  values in `ON DUPLICATE KEY UPDATE`; use it for cross-engine compatibility.
-- `SKIP LOCKED` is appropriate for queue-like work only. It skips locked rows
-  and can return an inconsistent view, so do not use it for general accounting
-  or integrity-sensitive reads.
+- MySQLは`ON DUPLICATE KEY UPDATE`における`VALUES(col)`の置き換えとして
+  row aliasを文書化している。`VALUES(col)`はそこでは非推奨である。
+- MariaDBは`ON DUPLICATE KEY UPDATE`でinsert値を参照する方法として
+  `VALUES(col)`を文書化している。エンジン横断の互換性のために使う。
+- `SKIP LOCKED`はqueueのような処理にだけ適する。lockされた行をスキップし
+  一貫性のないビューを返しうるため、一般的な会計処理や整合性が重要な読み取りには
+  使わない。
 
-## Schema Defaults
+## schemaのデフォルト
 
 ```sql
 CREATE TABLE orders (
@@ -57,22 +56,21 @@ CREATE TABLE orders (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-Default choices:
+デフォルトの選択:
 
-| Use Case | Prefer | Avoid |
+| ユースケース | 推奨 | 回避 |
 | --- | --- | --- |
-| Surrogate primary keys | `BIGINT UNSIGNED AUTO_INCREMENT` | `INT` for tables that can grow beyond 2B rows |
-| UUID lookup keys | `BINARY(16)` with conversion helpers | `VARCHAR(36)` primary keys on hot tables |
-| Money and exact quantities | `DECIMAL(p, s)` | `FLOAT` or `DOUBLE` |
-| User-facing text | `utf8mb4` tables and indexes | MySQL `utf8` / `utf8mb3` defaults |
-| Application timestamps | `DATETIME` with UTC managed by the app | Assuming `DATETIME` stores time zone metadata |
-| Soft deletes | `deleted_at DATETIME NULL` plus scoped indexes | Filtering soft-deleted rows without an index |
-| Extensible status values | lookup table or constrained `VARCHAR` | `ENUM` when values change often |
+| 代理primary key | `BIGINT UNSIGNED AUTO_INCREMENT` | 20億行を超えうるtableへの`INT` |
+| UUIDの検索key | 変換helper付きの`BINARY(16)` | hot tableでの`VARCHAR(36)` primary key |
+| 金額と正確な数量 | `DECIMAL(p, s)` | `FLOAT`や`DOUBLE` |
+| 利用者向けテキスト | `utf8mb4`のtableとindex | MySQLの`utf8` / `utf8mb3`デフォルト |
+| アプリケーションのtimestamp | アプリ側でUTC管理する`DATETIME` | `DATETIME`がtime zone情報を保持すると仮定すること |
+| 論理削除 | `deleted_at DATETIME NULL`とスコープ付きindex | indexなしで論理削除行を絞り込むこと |
+| 拡張しうるstatus値 | lookup tableまたは制約付き`VARCHAR` | 値が頻繁に変わるときの`ENUM` |
 
-## Indexing
+## index
 
-Composite index order usually follows equality predicates first, then range or
-sort columns:
+複合indexの順序は通常、等価述語を先に、その後にrangeやsort用のcolumnを置く。
 
 ```sql
 CREATE INDEX idx_orders_account_status_created
@@ -87,7 +85,7 @@ ORDER BY created_at DESC
 LIMIT 50;
 ```
 
-Use `EXPLAIN` before adding or changing an index:
+indexを追加・変更する前に`EXPLAIN`を使う。
 
 ```sql
 EXPLAIN
@@ -98,23 +96,23 @@ ORDER BY created_at DESC
 LIMIT 50;
 ```
 
-Signals to investigate:
+調査すべきシグナル:
 
-| Field | Risk Signal |
+| フィールド | リスクのシグナル |
 | --- | --- |
-| `type` | `ALL` on a large table |
-| `key` | `NULL` when a selective predicate exists |
-| `rows` | Very high row estimate for an interactive path |
-| `Extra` | `Using temporary`, `Using filesort`, or broad `Using where` |
+| `type` | 大きなtableでの`ALL` |
+| `key` | 選択性の高い述語があるのに`NULL` |
+| `rows` | 対話的な経路での非常に大きな行数見積もり |
+| `Extra` | `Using temporary`、`Using filesort`、広範な`Using where` |
 
-Avoid adding indexes blindly. Each index increases write cost, migration time,
-backup size, and buffer-pool pressure.
+やみくもにindexを追加しない。indexごとに書き込みコスト、migration時間、
+backupサイズ、buffer poolへの圧迫が増える。
 
-## Query Patterns
+## queryのパターン
 
-### Upsert
+### upsert
 
-Cross-engine-compatible form:
+エンジン横断で互換性のある形式:
 
 ```sql
 INSERT INTO user_settings (user_id, setting_key, setting_value)
@@ -124,7 +122,7 @@ ON DUPLICATE KEY UPDATE
     updated_at = CURRENT_TIMESTAMP;
 ```
 
-MySQL row-alias form:
+MySQLのrow alias形式:
 
 ```sql
 INSERT INTO user_settings (user_id, setting_key, setting_value)
@@ -134,10 +132,10 @@ ON DUPLICATE KEY UPDATE
     updated_at = CURRENT_TIMESTAMP;
 ```
 
-Use the row-alias form only after confirming the target is MySQL. Use
-`VALUES(col)` for MariaDB or mixed MySQL/MariaDB fleets.
+row alias形式は対象がMySQLだと確認できた場合にだけ使う。MariaDBや
+MySQL/MariaDB混在環境では`VALUES(col)`を使う。
 
-### Keyset Pagination
+### keyset pagination
 
 ```sql
 SELECT id, name, created_at
@@ -147,19 +145,19 @@ ORDER BY created_at DESC, id DESC
 LIMIT 50;
 ```
 
-Back it with an index that matches the cursor:
+cursorに一致するindexで裏付ける。
 
 ```sql
 CREATE INDEX idx_products_created_id ON products (created_at, id);
 ```
 
-Do not use deep `OFFSET` pagination on large tables; it makes the server scan
-and discard rows before returning the page.
+大きなtableで深い`OFFSET`のpaginationを使わない。ページを返す前に行を
+スキャンして捨てることになる。
 
-### JSON Fields
+### JSONフィールド
 
-Use JSON columns for extension data, not for fields that need heavy relational
-filtering or constraints.
+JSON columnは拡張データ用に使い、重いリレーショナルな絞り込みやconstraintが
+必要なフィールドには使わない。
 
 ```sql
 CREATE TABLE events (
@@ -171,10 +169,10 @@ CREATE TABLE events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-For frequently queried JSON paths, expose a generated column and index that
-column. Keep foreign keys, ownership, tenancy, and lifecycle fields relational.
+頻繁にqueryするJSONパスは、generated columnとして露出させindexを張る。
+外部key、所有権、テナンシー、ライフサイクルのフィールドはリレーショナルに保つ。
 
-### Full-Text Search
+### full-text search
 
 ```sql
 ALTER TABLE articles ADD FULLTEXT KEY ft_articles_title_body (title, body);
@@ -186,12 +184,12 @@ ORDER BY score DESC
 LIMIT 20;
 ```
 
-Use external search when you need typo tolerance, complex ranking, cross-table
-facets, or language-specific analysis beyond built-in full-text behavior.
+typo許容、複雑なranking、table横断のfacet、組み込みfull-textを超える
+言語固有の解析が必要なら外部の検索エンジンを使う。
 
-## Transactions
+## transaction
 
-Keep transactions short and lock rows in a consistent order:
+transactionは短く保ち、行を一貫した順序でlockする。
 
 ```sql
 START TRANSACTION;
@@ -208,17 +206,16 @@ UPDATE accounts SET balance = balance + ? WHERE id = ?;
 COMMIT;
 ```
 
-Deadlock and lock-wait checklist:
+deadlockとlock waitのチェックリスト:
 
-- Lock rows in a deterministic order across code paths.
-- Do external API calls before opening the transaction, not inside it.
-- Add indexes for predicates used in `UPDATE`, `DELETE`, and locking reads.
-- On deadlock, roll back and retry the whole transaction with a bounded retry
-  budget.
-- Capture `SHOW ENGINE INNODB STATUS\G` soon after a deadlock; it is overwritten
-  by later events.
+- コード経路をまたいで決定的な順序で行をlockする。
+- 外部API呼び出しはtransaction内ではなく、開始前に行う。
+- `UPDATE`、`DELETE`、locking readで使う述語にindexを張る。
+- deadlock時はrollbackし、上限を設けたretry予算でtransaction全体を再実行する。
+- deadlock直後に`SHOW ENGINE INNODB STATUS\G`を取得する。後続のイベントで
+  上書きされる。
 
-Queue-style worker claim:
+queue形式のworkerによる取得:
 
 ```sql
 START TRANSACTION;
@@ -237,12 +234,12 @@ WHERE id = ?;
 COMMIT;
 ```
 
-Use `SKIP LOCKED` only for queue-like workloads where skipping a locked row is
-acceptable. It is not a replacement for normal transactional consistency.
+`SKIP LOCKED`は、lockされた行のスキップが許容されるqueue的なワークロードに
+だけ使う。通常のtransaction整合性の代替ではない。
 
-## Connection Pools
+## connection pool
 
-SQLAlchemy example:
+SQLAlchemyの例:
 
 ```python
 from sqlalchemy import create_engine
@@ -258,7 +255,7 @@ engine = create_engine(
 )
 ```
 
-Node.js `mysql2` example:
+Node.jsの`mysql2`の例:
 
 ```javascript
 import mysql from 'mysql2/promise';
@@ -281,13 +278,13 @@ const [rows] = await pool.execute(
 );
 ```
 
-Keep application pool recycling below the server `wait_timeout`. If the server
-uses `wait_timeout = 300`, a `pool_recycle` around 240 seconds is coherent;
-`pool_pre_ping` still helps recover from network and failover events.
+アプリケーションのpool recycleはサーバーの`wait_timeout`より短く保つ。
+サーバーが`wait_timeout = 300`なら`pool_recycle`は240秒程度が整合する。
+`pool_pre_ping`はネットワーク障害やfailoverからの回復に依然として役立つ。
 
-## Diagnostics
+## 診断
 
-Useful first-pass commands:
+一次調査に有用なコマンド:
 
 ```sql
 SHOW FULL PROCESSLIST;
@@ -296,7 +293,7 @@ SHOW VARIABLES LIKE 'slow_query_log';
 SHOW VARIABLES LIKE 'long_query_time';
 ```
 
-Enable the slow log in a controlled environment:
+管理された環境でslow logを有効にする。
 
 ```sql
 SET GLOBAL slow_query_log = 'ON';
@@ -304,28 +301,26 @@ SET GLOBAL long_query_time = 1;
 SET GLOBAL log_queries_not_using_indexes = 'ON';
 ```
 
-Use `EXPLAIN ANALYZE` only when it is safe to execute the query. It runs the
-statement and can be expensive on production-sized data.
+`EXPLAIN ANALYZE`はqueryを実行しても安全な場合にだけ使う。文を実際に実行するため、
+本番規模のデータでは高コストになりうる。
 
-## Replication
+## replication
 
-Read replicas can lag. Do not route read-your-own-write paths, checkout flows,
-permission checks, or idempotency-key reads to a replica immediately after a
-write.
+read replicaは遅延しうる。書き込み直後にread-your-own-writeの経路、checkoutフロー、
+権限チェック、idempotency keyの読み取りをreplicaへ振り分けない。
 
 ```sql
--- MySQL legacy terminology, still common in existing fleets
+-- MySQLの旧来の用語。既存環境では今も一般的
 SHOW SLAVE STATUS\G;
 
--- Newer terminology where supported
+-- サポートされる環境での新しい用語
 SHOW REPLICA STATUS\G;
 ```
 
-Check the engine/version before standardizing on one command. Monitor replica
-SQL thread health, IO thread health, and lag, not just whether the TCP
-connection is alive.
+どちらのコマンドに統一するかを決める前にエンジンとバージョンを確認する。TCP接続が
+生きているかだけでなく、replicaのSQL threadとIO threadの健全性、遅延を監視する。
 
-## Security
+## セキュリティ
 
 ```sql
 CREATE USER 'app'@'%' IDENTIFIED BY 'use-a-secret-manager';
@@ -341,18 +336,18 @@ DROP USER IF EXISTS ''@'localhost';
 DROP USER IF EXISTS ''@'%';
 ```
 
-Security review points:
+セキュリティレビューの観点:
 
-- Do not grant `ALL PRIVILEGES` or `*.*` to application users.
-- Require TLS for application users when traffic crosses hosts or networks.
-- Store credentials in the platform secret manager, not in examples, scripts, or
-  repository files.
-- Separate migration/admin users from runtime application users.
-- Audit public network exposure and bind addresses before tuning performance.
+- アプリケーションユーザーに`ALL PRIVILEGES`や`*.*`を付与しない。
+- 通信がホストやネットワークをまたぐ場合、アプリケーションユーザーにTLSを必須にする。
+- credentialは実行基盤のsecret managerへ保存する。例、スクリプト、リポジトリ内の
+  ファイルへ置かない。
+- migration/管理用ユーザーと実行時のアプリケーションユーザーを分ける。
+- performanceを調整する前に、公開ネットワークへの露出とbind addressを監査する。
 
-## Configuration
+## 設定
 
-Example starting point for a dedicated database host:
+専用のdatabaseホスト向けの出発点の例:
 
 ```ini
 [mysqld]
@@ -376,38 +371,38 @@ binlog_format = ROW
 binlog_expire_logs_seconds = 604800
 ```
 
-Treat configuration values as a prompt for review, not a universal preset. Size
-memory, connections, log retention, and durability settings from workload,
-hardware, backup policy, and recovery objectives.
+設定値は普遍的なpresetではなくレビューのきっかけとして扱う。メモリ、接続数、
+ログ保持、耐久性の設定は、ワークロード、ハードウェア、backupポリシー、
+復旧目標から決める。
 
-## Anti-Patterns
+## anti-pattern
 
-| Anti-Pattern | Risk | Better Pattern |
+| anti-pattern | リスク | より良いパターン |
 | --- | --- | --- |
-| `SELECT *` in hot paths | Over-fetching and brittle clients | Select explicit columns |
-| Deep `OFFSET` pagination | Linear scans and slow pages | Keyset pagination |
-| No index on foreign-key joins | Slow joins and lock-heavy deletes | Index FK columns intentionally |
-| Long transactions | Lock waits and large undo history | Commit small units of work |
-| Direct DML against `mysql.user` | Grant-table corruption risk | Use `CREATE USER`, `ALTER USER`, `DROP USER` |
-| Application user with admin grants | High blast radius | Least-privilege runtime user |
-| Pool recycle above `wait_timeout` | Stale pooled connections | Recycle below timeout and pre-ping |
-| Replica reads after writes | Stale user-facing state | Pin read-after-write flows to primary |
+| hot pathでの`SELECT *` | 過剰取得と壊れやすいclient | 明示的なcolumnを選択する |
+| 深い`OFFSET` pagination | 線形スキャンと遅いページ | keyset pagination |
+| 外部keyのjoinにindexがない | 遅いjoinとlockの多い削除 | FK columnへ意図的にindexを張る |
+| 長いtransaction | lock waitと巨大なundo履歴 | 小さな単位でcommitする |
+| `mysql.user`への直接DML | grant tableの破損リスク | `CREATE USER`、`ALTER USER`、`DROP USER`を使う |
+| 管理権限を持つアプリケーションユーザー | 影響範囲が大きい | 最小権限の実行時ユーザー |
+| `wait_timeout`より長いpool recycle | 古いpool接続 | timeoutより短くrecycleしpre-pingする |
+| 書き込み直後のreplica読み取り | 利用者に見える古い状態 | read-after-writeのフローをprimaryへ固定する |
 
-## Output Expectations
+## 出力の期待値
 
-When this skill is used for review, return:
+このスキルをレビューに使うときは、次を返す。
 
-1. Engine/version assumptions.
-2. Highest-risk correctness, lock, security, and migration issues.
-3. Exact SQL or code changes for the safe path.
-4. Validation plan: `EXPLAIN`, migration dry run, lock/deadlock check, and
-   rollback criteria.
-5. Any MySQL/MariaDB syntax differences that affect the recommendation.
+1. エンジン／バージョンの前提。
+2. 最もリスクの高い正しさ、lock、セキュリティ、migrationの問題。
+3. 安全な経路のための正確なSQLまたはコード変更。
+4. 検証計画: `EXPLAIN`、migrationのdry run、lock/deadlockチェック、
+   rollback基準。
+5. 推奨内容に影響するMySQL/MariaDBの構文差異。
 
-## Related
+## 関連
 
-- Skill: `postgres-patterns` - PostgreSQL-specific schema and query patterns
-- Skill: `database-migrations` - migration planning and rollout safety
-- Skill: `backend-patterns` - API and service-layer patterns
-- Skill: `security-review` - secret handling, auth, and least privilege
-- Agent: `database-reviewer` - broader database review workflow
+- Skill: `postgres-patterns` - PostgreSQL固有のschemaとqueryのパターン
+- Skill: `database-migrations` - migrationの計画と展開の安全性
+- Skill: `backend-patterns` - APIとservice層のパターン
+- Skill: `security-review` - secretの扱い、認証、最小権限
+- Agent: `database-reviewer` - より広いdatabaseレビューのworkflow

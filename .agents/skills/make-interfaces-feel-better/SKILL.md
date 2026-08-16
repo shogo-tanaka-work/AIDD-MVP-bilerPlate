@@ -1,63 +1,59 @@
 ---
 name: make-interfaces-feel-better
-description: Apply concrete design-engineering details that make interfaces feel polished. Use when reviewing or improving UI spacing, typography, borders, shadows, motion, hit areas, icons, text wrapping, and interaction states.
+description: interfaceの完成度を高める具体的なdesign engineeringの詳細を適用する。UIのspacing、typography、border、shadow、motion、hit area、icon、text wrapping、interaction stateをレビュー・改善するときに使う。
 metadata:
   origin: community
 ---
 
 # Make Interfaces Feel Better
 
-Use this skill for the small design-engineering details that compound into a
-more polished interface.
+積み重なることでinterfaceの完成度を高める、細かなdesign engineeringの工夫のために
+このskillを使う。
 
-Source: salvaged from stale community PR #1659 by `linus707`.
+出典: 停滞したcommunity PR #1659（`linus707`）から回収。
 
-## When to Use
+## 使う場面
 
-- The user says the UI feels off, flat, generic, cramped, jumpy, or unfinished.
-- You are building controls, cards, lists, dashboards, navigation, forms, or
-  toolbars.
-- A component needs hover, active, focus, enter, exit, loading, or empty states.
-- A frontend review needs specific before/after recommendations.
+- UIがしっくりこない、平坦、ありきたり、窮屈、ガタつく、未完成だとユーザーが言うとき。
+- control、card、list、dashboard、navigation、form、toolbarを実装しているとき。
+- componentにhover、active、focus、enter、exit、loading、empty状態が必要なとき。
+- frontendレビューで具体的なbefore/afterの提案が必要なとき。
 
-## Core Principles
+## 基本原則
 
 ### Concentric Radius
 
-For nearby nested rounded surfaces:
+近接して入れ子になった角丸surfaceには次を使う:
 
 ```text
 outer radius = inner radius + padding
 ```
 
-If padding is large, treat layers as separate surfaces instead of forcing the
-math. The point is optical coherence, not formula worship.
+paddingが大きい場合は、式に合わせようとせず別々のsurfaceとして扱う。目的は
+視覚的な一貫性であり、公式の順守ではない。
 
-### Optical Alignment
+### 視覚的な位置合わせ
 
-Geometric centering is not always visual centering. Icon buttons, play
-triangles, arrows, stars, and asymmetric icons often need a small offset. Fix the
-SVG when possible; otherwise adjust with a pixel-level margin or padding change.
+幾何学的な中央が常に視覚的な中央になるとは限らない。icon button、再生用の
+三角形、矢印、星、非対称なiconは小さなoffsetを必要とすることが多い。可能ならSVG側を
+直し、難しければpixel単位のmarginまたはpaddingで調整する。
 
-### Shadows And Borders
+### ShadowとBorder
 
-Use borders for separation and focus rings. Use layered shadows when a card,
-button, dropdown, or popover needs depth. Shadows should be transparent and
-subtle enough to work across backgrounds.
+分離とfocus ringにはborderを使う。card、button、dropdown、popoverに奥行きが必要なときは
+重ねたshadowを使う。shadowは透過させ、どの背景でも機能する程度に控えめにする。
 
 ### Text Wrapping
 
-- Use `text-wrap: balance` on headings and short titles.
-- Use `text-wrap: pretty` on short-to-medium body text, captions, descriptions,
-  and list items.
-- Avoid both on long prose, code, and preformatted content.
-- Use `font-variant-numeric: tabular-nums` for counters, timers, prices, tables,
-  and other updating numbers.
+- 見出しや短いタイトルには `text-wrap: balance` を使う。
+- 短〜中程度の本文、caption、説明、list itemには `text-wrap: pretty` を使う。
+- 長文、code、preformattedな内容にはどちらも使わない。
+- counter、timer、価格、table、その他更新される数値には `font-variant-numeric: tabular-nums` を使う。
 
 ### Font Smoothing
 
-On macOS, apply antialiased font smoothing at the root layout when the project
-does not already do so:
+macOSでは、プロジェクトが未対応の場合にroot layoutでantialiasedなfont smoothingを
+適用する:
 
 ```css
 html {
@@ -66,10 +62,9 @@ html {
 }
 ```
 
-### Image Outlines
+### 画像のoutline
 
-Images often need a subtle inset outline so their edges do not blur into the
-surface.
+画像は、縁がsurfaceに溶け込まないよう控えめなinset outlineを必要とすることが多い。
 
 ```css
 img {
@@ -84,27 +79,25 @@ img {
 }
 ```
 
-Use neutral black or white alpha outlines. Do not tint image outlines with the
-brand palette.
+中立な黒または白のalpha outlineを使う。画像のoutlineをbrand paletteで
+色付けしない。
 
 ### Motion
 
-Use CSS transitions for interactive state changes because they can retarget
-when the user changes intent mid-motion. Reserve keyframes for staged
-one-shot entrances or loading sequences.
+interactiveな状態変化にはCSS transitionを使う。動作の途中で利用者の意図が
+変わっても再ターゲットできるため。keyframesは段階的な一度きりの登場や
+loading演出に限定する。
 
-Good motion defaults:
+適切なmotionの既定値:
 
-- Enter: combine opacity, small `translateY`, and optionally blur.
-- Exit: shorter and quieter than enter, usually 150ms.
-- Press: `scale(0.96)` for tactile buttons, with a way to disable it when the
-  movement distracts.
-- Icon swaps: cross-fade with opacity, scale, and blur instead of instant
-  visibility toggles.
+- Enter: opacity、小さな `translateY`、必要に応じてblurを組み合わせる。
+- Exit: enterより短く控えめにし、通常は150ms。
+- Press: 触覚的なbuttonには `scale(0.96)`。動きが邪魔なときに無効化できる手段を用意する。
+- Iconの差し替え: 即座の表示切り替えではなく、opacity・scale・blurでcross-fadeする。
 
-### Transition Scope
+### Transitionの適用範囲
 
-Never use `transition: all`. Specify the changed properties:
+`transition: all` は使わない。変化するプロパティを明示する:
 
 ```css
 .button {
@@ -114,39 +107,37 @@ Never use `transition: all`. Specify the changed properties:
 }
 ```
 
-Use `will-change` only for first-frame stutter on compositor-friendly
-properties such as `transform`, `opacity`, and `filter`. Never use
-`will-change: all`.
+`will-change` は `transform`、`opacity`、`filter` などcompositor向きのプロパティで
+初回フレームのstutterが出るときだけ使う。`will-change: all` は使わない。
 
-### Hit Areas
+### Hit Area
 
-Interactive controls should have at least a 40x40px hit area, ideally 44x44px
-where the layout allows it. Expand with a pseudo-element when the visible icon
-is smaller, but do not let expanded hit areas overlap.
+interactiveなcontrolは最低でも40x40pxのhit areaを持たせ、layoutが許すなら44x44pxが望ましい。
+表示されるiconがそれより小さい場合はpseudo-elementで拡張するが、拡張したhit areaを
+重ねない。
 
-## Review Output
+## レビュー出力
 
-When reviewing a UI polish pass, report concrete changes in before/after rows:
+UIのpolish passをレビューするときは、具体的な変更をbefore/afterの行で報告する:
 
-| Principle | Before | After |
+| 原則 | Before | After |
 | --- | --- | --- |
-| Concentric radius | Same radius on parent and child | Parent radius accounts for padding |
-| Tabular numbers | Counter shifts as digits change | Counter uses `tabular-nums` |
-| Transition scope | `transition: all` | Explicit transition properties |
+| Concentric radius | 親と子で同じradius | 親のradiusがpaddingを考慮している |
+| Tabular numbers | 桁が変わるとcounterがずれる | counterが `tabular-nums` を使う |
+| Transitionの適用範囲 | `transition: all` | transitionプロパティを明示 |
 
-Include file paths and properties when they are not obvious from the snippets.
-Omit principles that you checked but did not change.
+snippetから自明でない場合はfile pathとプロパティを併記する。
+確認したが変更しなかった原則は省く。
 
-## Checklist
+## チェックリスト
 
-- Nested rounded elements are optically coherent.
-- Icons are visually centered.
-- Buttons, cards, and popovers use borders or shadows for the right reason.
-- Headings and short text avoid awkward wrapping.
-- Dynamic numbers use tabular numerals.
-- Images have neutral outlines where needed.
-- Enter and exit animations are split, subtle, and interruptible where
-  appropriate.
-- Buttons have tactile active states without exaggerated motion.
-- `transition: all` and `will-change: all` are absent.
-- Small controls still have usable hit areas.
+- 入れ子の角丸要素が視覚的に一貫している。
+- iconが視覚的に中央にある。
+- button、card、popoverが適切な理由でborderまたはshadowを使っている。
+- 見出しと短いテキストが不格好な折り返しを避けている。
+- 動的な数値がtabular numeralsを使っている。
+- 必要な箇所で画像が中立なoutlineを持つ。
+- enterとexitのアニメーションが分離され、控えめで、必要に応じて中断可能である。
+- buttonが過剰な動きなく触覚的なactive状態を持つ。
+- `transition: all` と `will-change: all` が存在しない。
+- 小さなcontrolでも実用的なhit areaがある。

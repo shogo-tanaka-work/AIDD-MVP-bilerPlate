@@ -1,6 +1,6 @@
 ---
 name: eval-harness
-description: Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles. Use when a Claude Code workflow needs a formal eval before it is trusted or changed.
+description: eval-driven development（EDD）の原則をClaude Codeのセッションへ適用する形式的な評価フレームワーク。Claude Codeのworkflowを信頼または変更する前に、形式的なevalが必要なときに使う。
 metadata:
   origin: ECC
 tools: Read, Write, Edit, Bash, Grep, Glob
@@ -8,28 +8,28 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 # Eval Harness Skill
 
-A formal evaluation framework for Claude Code sessions, implementing eval-driven development (EDD) principles.
+eval-driven development（EDD）の原則を実装した、Claude Codeセッション向けの形式的な評価フレームワーク。
 
-## When to Activate
+## いつ発動するか
 
-- Setting up eval-driven development (EDD) for AI-assisted workflows
-- Defining pass/fail criteria for Claude Code task completion
-- Measuring agent reliability with pass@k metrics
-- Creating regression test suites for prompt or agent changes
-- Benchmarking agent performance across model versions
+- AI支援workflowにeval-driven development（EDD）を導入するとき
+- Claude Codeのタスク完了に対する合否基準を定義するとき
+- pass@k指標でagentの信頼性を測定するとき
+- promptやagentの変更に対する回帰テスト群を作るとき
+- モデルバージョン間でagentの性能を比較するとき
 
-## Philosophy
+## 考え方
 
-Eval-Driven Development treats evals as the "unit tests of AI development":
-- Define expected behavior BEFORE implementation
-- Run evals continuously during development
-- Track regressions with each change
-- Use pass@k metrics for reliability measurement
+Eval-Driven Developmentは、evalを「AI開発におけるunit test」として扱う。
+- 実装の前に期待する挙動を定義する
+- 開発中は継続的にevalを実行する
+- 変更ごとに回帰を追跡する
+- 信頼性の測定にpass@k指標を使う
 
-## Eval Types
+## Evalの種類
 
 ### Capability Evals
-Test if Claude can do something it couldn't before:
+これまでできなかったことをClaudeができるかを検証する。
 ```markdown
 [CAPABILITY EVAL: feature-name]
 Task: Description of what Claude should accomplish
@@ -41,7 +41,7 @@ Expected Output: Description of expected result
 ```
 
 ### Regression Evals
-Ensure changes don't break existing functionality:
+変更が既存機能を壊していないことを確認する。
 ```markdown
 [REGRESSION EVAL: feature-name]
 Baseline: SHA or checkpoint name
@@ -52,10 +52,10 @@ Tests:
 Result: X/Y passed (previously Y/Y)
 ```
 
-## Grader Types
+## Graderの種類
 
 ### 1. Code-Based Grader
-Deterministic checks using code:
+コードによる決定的なチェック。
 ```bash
 # Check if file contains expected pattern
 grep -q "export function handleAuth" src/auth.ts && echo "PASS" || echo "FAIL"
@@ -68,7 +68,7 @@ npm run build && echo "PASS" || echo "FAIL"
 ```
 
 ### 2. Model-Based Grader
-Use Claude to evaluate open-ended outputs:
+自由記述の出力の評価にClaudeを使う。
 ```markdown
 [MODEL GRADER PROMPT]
 Evaluate the following code change:
@@ -82,7 +82,7 @@ Reasoning: [explanation]
 ```
 
 ### 3. Human Grader
-Flag for manual review:
+人手レビュー対象として印を付ける。
 ```markdown
 [HUMAN REVIEW REQUIRED]
 Change: Description of what changed
@@ -90,23 +90,23 @@ Reason: Why human review is needed
 Risk Level: LOW/MEDIUM/HIGH
 ```
 
-## Metrics
+## 指標
 
 ### pass@k
-"At least one success in k attempts"
-- pass@1: First attempt success rate
-- pass@3: Success within 3 attempts
-- Typical target: pass@3 > 90%
+「k回の試行で少なくとも1回成功する」
+- pass@1: 初回試行の成功率
+- pass@3: 3回以内での成功
+- 一般的な目標: pass@3 > 90%
 
 ### pass^k
-"All k trials succeed"
-- Higher bar for reliability
-- pass^3: 3 consecutive successes
-- Use for critical paths
+「k回すべての試行が成功する」
+- 信頼性としてはより高い基準
+- pass^3: 3回連続の成功
+- 重要経路に使う
 
-## Eval Workflow
+## Evalのworkflow
 
-### 1. Define (Before Coding)
+### 1. 定義（コーディング前）
 ```markdown
 ## EVAL DEFINITION: feature-xyz
 
@@ -125,10 +125,10 @@ Risk Level: LOW/MEDIUM/HIGH
 - pass^3 = 100% for regression evals
 ```
 
-### 2. Implement
-Write code to pass the defined evals.
+### 2. 実装
+定義したevalを通すコードを書く。
 
-### 3. Evaluate
+### 3. 評価
 ```bash
 # Run capability evals
 [Run each capability eval, record PASS/FAIL]
@@ -139,7 +139,7 @@ npm test -- --testPathPattern="existing"
 # Generate report
 ```
 
-### 4. Report
+### 4. 報告
 ```markdown
 EVAL REPORT: feature-xyz
 ========================
@@ -163,29 +163,29 @@ Metrics:
 Status: READY FOR REVIEW
 ```
 
-## Integration Patterns
+## 組み込みパターン
 
-### Pre-Implementation
+### 実装前
 ```
 /eval define feature-name
 ```
-Creates eval definition file at `.claude/evals/feature-name.md`
+`.claude/evals/feature-name.md`にeval定義ファイルを作成する
 
-### During Implementation
+### 実装中
 ```
 /eval check feature-name
 ```
-Runs current evals and reports status
+現在のevalを実行して状態を報告する
 
-### Post-Implementation
+### 実装後
 ```
 /eval report feature-name
 ```
-Generates full eval report
+完全なevalレポートを生成する
 
-## Eval Storage
+## Evalの保存場所
 
-Store evals in project:
+evalはプロジェクト内に保存する。
 ```
 .claude/
   evals/
@@ -194,17 +194,17 @@ Store evals in project:
     baseline.json       # Regression baselines
 ```
 
-## Best Practices
+## Best Practice
 
-1. **Define evals BEFORE coding** - Forces clear thinking about success criteria
-2. **Run evals frequently** - Catch regressions early
-3. **Track pass@k over time** - Monitor reliability trends
-4. **Use code graders when possible** - Deterministic > probabilistic
-5. **Human review for security** - Never fully automate security checks
-6. **Keep evals fast** - Slow evals don't get run
-7. **Version evals with code** - Evals are first-class artifacts
+1. **コーディング前にevalを定義する** - 成功基準を明確に考えさせる
+2. **evalを頻繁に実行する** - 回帰を早期に検出する
+3. **pass@kを継続的に追跡する** - 信頼性の傾向を監視する
+4. **可能な限りcode graderを使う** - 決定的 > 確率的
+5. **セキュリティは人手レビュー** - セキュリティ確認を完全自動化しない
+6. **evalを高速に保つ** - 遅いevalは実行されなくなる
+7. **evalをコードと一緒にバージョン管理する** - evalは一級の成果物
 
-## Example: Adding Authentication
+## 例: 認証の追加
 
 ```markdown
 ## EVAL: add-authentication
@@ -238,34 +238,34 @@ Status: SHIP IT
 
 ## Product Evals (v1.8)
 
-Use product evals when behavior quality cannot be captured by unit tests alone.
+unit testだけでは挙動の品質を捉えられない場合にproduct evalを使う。
 
-### Grader Types
+### Graderの種類
 
-1. Code grader (deterministic assertions)
-2. Rule grader (regex/schema constraints)
-3. Model grader (LLM-as-judge rubric)
-4. Human grader (manual adjudication for ambiguous outputs)
+1. Code grader（決定的なassertion）
+2. Rule grader（regex・schemaによる制約）
+3. Model grader（LLM-as-judgeのrubric）
+4. Human grader（曖昧な出力に対する人手判定）
 
-### pass@k Guidance
+### pass@kの指針
 
-- `pass@1`: direct reliability
-- `pass@3`: practical reliability under controlled retries
-- `pass^3`: stability test (all 3 runs must pass)
+- `pass@1`: 素の信頼性
+- `pass@3`: 制御された再試行下での実用的な信頼性
+- `pass^3`: 安定性テスト（3回すべて通過が必要）
 
-Recommended thresholds:
+推奨閾値。
 - Capability evals: pass@3 >= 0.90
-- Regression evals: pass^3 = 1.00 for release-critical paths
+- Regression evals: リリース上重要な経路ではpass^3 = 1.00
 
-### Eval Anti-Patterns
+### Evalのアンチパターン
 
-- Overfitting prompts to known eval examples
-- Measuring only happy-path outputs
-- Ignoring cost and latency drift while chasing pass rates
-- Allowing flaky graders in release gates
+- 既知のeval例へpromptを過剰適合させる
+- happy pathの出力しか測定しない
+- pass率を追う一方でコストとlatencyの変動を無視する
+- 不安定なgraderをリリースgateに残す
 
-### Minimal Eval Artifact Layout
+### 最小限のeval成果物構成
 
-- `.claude/evals/<feature>.md` definition
-- `.claude/evals/<feature>.log` run history
-- `docs/releases/<version>/eval-summary.md` release snapshot
+- `.claude/evals/<feature>.md` 定義
+- `.claude/evals/<feature>.log` 実行履歴
+- `docs/releases/<version>/eval-summary.md` リリース時のスナップショット

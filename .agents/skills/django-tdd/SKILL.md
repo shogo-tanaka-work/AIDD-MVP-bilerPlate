@@ -1,42 +1,42 @@
 ---
 name: django-tdd
-description: Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs. Use when writing Django or DRF tests with pytest-django, or driving a Django feature test-first.
+description: pytest-djangoによるDjangoのtest戦略、TDD手法、factory_boy、mocking、coverage、Django REST FrameworkのAPI test。pytest-djangoでDjangoやDRFのtestを書くとき、またはDjangoの機能をtest-firstで進めるときに使う。
 metadata:
   origin: ECC
 ---
 
-# Django Testing with TDD
+# TDDによるDjango Testing
 
-Test-driven development for Django applications using pytest, factory_boy, and Django REST Framework.
+pytest、factory_boy、Django REST Frameworkを使ったDjangoアプリケーションのtest駆動開発。
 
-## When to Activate
+## 発動タイミング
 
-- Writing new Django applications
-- Implementing Django REST Framework APIs
-- Testing Django models, views, and serializers
-- Setting up testing infrastructure for Django projects
+- 新しいDjangoアプリケーションを書くとき
+- Django REST FrameworkのAPIを実装するとき
+- Djangoのmodel、view、serializerをtestするとき
+- Djangoプロジェクトのtest基盤を整備するとき
 
-## TDD Workflow for Django
+## DjangoのTDDワークフロー
 
-### Red-Green-Refactor Cycle
+### Red-Green-Refactorサイクル
 
 ```python
-# Step 1: RED - Write failing test
+# Step 1: RED - 失敗するtestを書く
 def test_user_creation():
     user = User.objects.create_user(email='test@example.com', password='testpass123')
     assert user.email == 'test@example.com'
     assert user.check_password('testpass123')
     assert not user.is_staff
 
-# Step 2: GREEN - Make test pass
-# Create User model or factory
+# Step 2: GREEN - testを通す
+# User modelまたはfactoryを作る
 
-# Step 3: REFACTOR - Improve while keeping tests green
+# Step 3: REFACTOR - testをgreenに保ったまま改善する
 ```
 
 ## Setup
 
-### pytest Configuration
+### pytestの設定
 
 ```ini
 # pytest.ini
@@ -58,7 +58,7 @@ markers =
     integration: marks tests as integration tests
 ```
 
-### Test Settings
+### Test用設定
 
 ```python
 # config/settings/test.py
@@ -72,7 +72,7 @@ DATABASES = {
     }
 }
 
-# Disable migrations for speed
+# 高速化のためmigrationを無効化する
 class DisableMigrations:
     def __contains__(self, item):
         return True
@@ -82,7 +82,7 @@ class DisableMigrations:
 
 MIGRATION_MODULES = DisableMigrations()
 
-# Faster password hashing
+# 高速なpassword hashing
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
 ]
@@ -90,7 +90,7 @@ PASSWORD_HASHERS = [
 # Email backend
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Celery always eager
+# Celeryを常にeagerにする
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 ```
@@ -107,12 +107,12 @@ User = get_user_model()
 
 @pytest.fixture(autouse=True)
 def timezone_settings(settings):
-    """Ensure consistent timezone."""
+    """timezoneを一定に保つ。"""
     settings.TIME_ZONE = 'UTC'
 
 @pytest.fixture
 def user(db):
-    """Create a test user."""
+    """test用userを作る。"""
     return User.objects.create_user(
         email='test@example.com',
         password='testpass123',
@@ -121,7 +121,7 @@ def user(db):
 
 @pytest.fixture
 def admin_user(db):
-    """Create an admin user."""
+    """admin userを作る。"""
     return User.objects.create_superuser(
         email='admin@example.com',
         password='adminpass123',
@@ -130,26 +130,26 @@ def admin_user(db):
 
 @pytest.fixture
 def authenticated_client(client, user):
-    """Return authenticated client."""
+    """認証済みclientを返す。"""
     client.force_login(user)
     return client
 
 @pytest.fixture
 def api_client():
-    """Return DRF API client."""
+    """DRFのAPI clientを返す。"""
     from rest_framework.test import APIClient
     return APIClient()
 
 @pytest.fixture
 def authenticated_api_client(api_client, user):
-    """Return authenticated API client."""
+    """認証済みAPI clientを返す。"""
     api_client.force_authenticate(user=user)
     return api_client
 ```
 
 ## Factory Boy
 
-### Factory Setup
+### Factoryの設定
 
 ```python
 # tests/factories.py
@@ -162,7 +162,7 @@ from apps.products.models import Product, Category
 User = get_user_model()
 
 class UserFactory(factory.django.DjangoModelFactory):
-    """Factory for User model."""
+    """User modelのfactory。"""
 
     class Meta:
         model = User
@@ -175,7 +175,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_active = True
 
 class CategoryFactory(factory.django.DjangoModelFactory):
-    """Factory for Category model."""
+    """Category modelのfactory。"""
 
     class Meta:
         model = Category
@@ -185,7 +185,7 @@ class CategoryFactory(factory.django.DjangoModelFactory):
     description = factory.Faker('text')
 
 class ProductFactory(factory.django.DjangoModelFactory):
-    """Factory for Product model."""
+    """Product modelのfactory。"""
 
     class Meta:
         model = Product
@@ -201,7 +201,7 @@ class ProductFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def tags(self, create, extracted, **kwargs):
-        """Add tags to product."""
+        """productへtagを追加する。"""
         if not create:
             return
         if extracted:
@@ -209,7 +209,7 @@ class ProductFactory(factory.django.DjangoModelFactory):
                 self.tags.add(tag)
 ```
 
-### Using Factories
+### Factoryの使い方
 
 ```python
 # tests/test_models.py
@@ -217,27 +217,27 @@ import pytest
 from tests.factories import ProductFactory, UserFactory
 
 def test_product_creation():
-    """Test product creation using factory."""
+    """factoryによるproduct作成のtest。"""
     product = ProductFactory(price=100.00, stock=50)
     assert product.price == 100.00
     assert product.stock == 50
     assert product.is_active is True
 
 def test_product_with_tags():
-    """Test product with tags."""
+    """tag付きproductのtest。"""
     tags = [TagFactory(name='electronics'), TagFactory(name='new')]
     product = ProductFactory(tags=tags)
     assert product.tags.count() == 2
 
 def test_multiple_products():
-    """Test creating multiple products."""
+    """複数productの作成test。"""
     products = ProductFactory.create_batch(10)
     assert len(products) == 10
 ```
 
 ## Model Testing
 
-### Model Tests
+### Modelのtest
 
 ```python
 # tests/test_models.py
@@ -246,10 +246,10 @@ from django.core.exceptions import ValidationError
 from tests.factories import UserFactory, ProductFactory
 
 class TestUserModel:
-    """Test User model."""
+    """User modelのtest。"""
 
     def test_create_user(self, db):
-        """Test creating a regular user."""
+        """通常userの作成test。"""
         user = UserFactory(email='test@example.com')
         assert user.email == 'test@example.com'
         assert user.check_password('testpass123')
@@ -257,7 +257,7 @@ class TestUserModel:
         assert not user.is_superuser
 
     def test_create_superuser(self, db):
-        """Test creating a superuser."""
+        """superuserの作成test。"""
         user = UserFactory(
             email='admin@example.com',
             is_staff=True,
@@ -267,33 +267,33 @@ class TestUserModel:
         assert user.is_superuser
 
     def test_user_str(self, db):
-        """Test user string representation."""
+        """userの文字列表現のtest。"""
         user = UserFactory(email='test@example.com')
         assert str(user) == 'test@example.com'
 
 class TestProductModel:
-    """Test Product model."""
+    """Product modelのtest。"""
 
     def test_product_creation(self, db):
-        """Test creating a product."""
+        """productの作成test。"""
         product = ProductFactory()
         assert product.id is not None
         assert product.is_active is True
         assert product.created_at is not None
 
     def test_product_slug_generation(self, db):
-        """Test automatic slug generation."""
+        """slug自動生成のtest。"""
         product = ProductFactory(name='Test Product')
         assert product.slug == 'test-product'
 
     def test_product_price_validation(self, db):
-        """Test price cannot be negative."""
+        """priceが負にならないことのtest。"""
         product = ProductFactory(price=-10)
         with pytest.raises(ValidationError):
             product.full_clean()
 
     def test_product_manager_active(self, db):
-        """Test active manager method."""
+        """active managerメソッドのtest。"""
         ProductFactory.create_batch(5, is_active=True)
         ProductFactory.create_batch(3, is_active=False)
 
@@ -301,19 +301,19 @@ class TestProductModel:
         assert active_count == 5
 
     def test_product_stock_management(self, db):
-        """Test stock management."""
+        """在庫管理のtest。"""
         product = ProductFactory(stock=10)
         product.reduce_stock(5)
         product.refresh_from_db()
         assert product.stock == 5
 
         with pytest.raises(ValueError):
-            product.reduce_stock(10)  # Not enough stock
+            product.reduce_stock(10)  # 在庫不足
 ```
 
 ## View Testing
 
-### Django View Testing
+### Django viewのtest
 
 ```python
 # tests/test_views.py
@@ -322,10 +322,10 @@ from django.urls import reverse
 from tests.factories import ProductFactory, UserFactory
 
 class TestProductViews:
-    """Test product views."""
+    """product viewのtest。"""
 
     def test_product_list(self, client, db):
-        """Test product list view."""
+        """product一覧viewのtest。"""
         ProductFactory.create_batch(10)
 
         response = client.get(reverse('products:list'))
@@ -334,7 +334,7 @@ class TestProductViews:
         assert len(response.context['products']) == 10
 
     def test_product_detail(self, client, db):
-        """Test product detail view."""
+        """product詳細viewのtest。"""
         product = ProductFactory()
 
         response = client.get(reverse('products:detail', kwargs={'slug': product.slug}))
@@ -343,20 +343,20 @@ class TestProductViews:
         assert response.context['product'] == product
 
     def test_product_create_requires_login(self, client, db):
-        """Test product creation requires authentication."""
+        """product作成に認証が必要であることのtest。"""
         response = client.get(reverse('products:create'))
 
         assert response.status_code == 302
         assert response.url.startswith('/accounts/login/')
 
     def test_product_create_authenticated(self, authenticated_client, db):
-        """Test product creation as authenticated user."""
+        """認証済みuserによるproduct作成のtest。"""
         response = authenticated_client.get(reverse('products:create'))
 
         assert response.status_code == 200
 
     def test_product_create_post(self, authenticated_client, db, category):
-        """Test creating a product via POST."""
+        """POSTによるproduct作成のtest。"""
         data = {
             'name': 'Test Product',
             'description': 'A test product',
@@ -373,7 +373,7 @@ class TestProductViews:
 
 ## DRF API Testing
 
-### Serializer Testing
+### Serializerのtest
 
 ```python
 # tests/test_serializers.py
@@ -383,10 +383,10 @@ from apps.products.serializers import ProductSerializer
 from tests.factories import ProductFactory
 
 class TestProductSerializer:
-    """Test ProductSerializer."""
+    """ProductSerializerのtest。"""
 
     def test_serialize_product(self, db):
-        """Test serializing a product."""
+        """productのserialize test。"""
         product = ProductFactory()
         serializer = ProductSerializer(product)
 
@@ -397,7 +397,7 @@ class TestProductSerializer:
         assert data['price'] == str(product.price)
 
     def test_deserialize_product(self, db):
-        """Test deserializing product data."""
+        """product dataのdeserialize test。"""
         data = {
             'name': 'Test Product',
             'description': 'Test description',
@@ -415,7 +415,7 @@ class TestProductSerializer:
         assert float(product.price) == 99.99
 
     def test_price_validation(self, db):
-        """Test price validation."""
+        """price検証のtest。"""
         data = {
             'name': 'Test Product',
             'price': '-10.00',
@@ -428,7 +428,7 @@ class TestProductSerializer:
         assert 'price' in serializer.errors
 
     def test_stock_validation(self, db):
-        """Test stock cannot be negative."""
+        """stockが負にならないことのtest。"""
         data = {
             'name': 'Test Product',
             'price': '99.99',
@@ -441,7 +441,7 @@ class TestProductSerializer:
         assert 'stock' in serializer.errors
 ```
 
-### API ViewSet Testing
+### API ViewSetのtest
 
 ```python
 # tests/test_api.py
@@ -452,15 +452,15 @@ from django.urls import reverse
 from tests.factories import ProductFactory, UserFactory
 
 class TestProductAPI:
-    """Test Product API endpoints."""
+    """Product APIのendpoint test。"""
 
     @pytest.fixture
     def api_client(self):
-        """Return API client."""
+        """API clientを返す。"""
         return APIClient()
 
     def test_list_products(self, api_client, db):
-        """Test listing products."""
+        """product一覧のtest。"""
         ProductFactory.create_batch(10)
 
         url = reverse('api:product-list')
@@ -470,7 +470,7 @@ class TestProductAPI:
         assert response.data['count'] == 10
 
     def test_retrieve_product(self, api_client, db):
-        """Test retrieving a product."""
+        """product取得のtest。"""
         product = ProductFactory()
 
         url = reverse('api:product-detail', kwargs={'pk': product.id})
@@ -480,7 +480,7 @@ class TestProductAPI:
         assert response.data['id'] == product.id
 
     def test_create_product_unauthorized(self, api_client, db):
-        """Test creating product without authentication."""
+        """未認証でのproduct作成のtest。"""
         url = reverse('api:product-list')
         data = {'name': 'Test Product', 'price': '99.99'}
 
@@ -489,7 +489,7 @@ class TestProductAPI:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_create_product_authorized(self, authenticated_api_client, db):
-        """Test creating product as authenticated user."""
+        """認証済みuserによるproduct作成のtest。"""
         url = reverse('api:product-list')
         data = {
             'name': 'Test Product',
@@ -504,7 +504,7 @@ class TestProductAPI:
         assert response.data['name'] == 'Test Product'
 
     def test_update_product(self, authenticated_api_client, db):
-        """Test updating a product."""
+        """productの更新test。"""
         product = ProductFactory(created_by=authenticated_api_client.user)
 
         url = reverse('api:product-detail', kwargs={'pk': product.id})
@@ -516,7 +516,7 @@ class TestProductAPI:
         assert response.data['name'] == 'Updated Product'
 
     def test_delete_product(self, authenticated_api_client, db):
-        """Test deleting a product."""
+        """productの削除test。"""
         product = ProductFactory(created_by=authenticated_api_client.user)
 
         url = reverse('api:product-detail', kwargs={'pk': product.id})
@@ -525,7 +525,7 @@ class TestProductAPI:
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_filter_products_by_price(self, api_client, db):
-        """Test filtering products by price."""
+        """priceによるproductのfiltering test。"""
         ProductFactory(price=50)
         ProductFactory(price=150)
 
@@ -536,7 +536,7 @@ class TestProductAPI:
         assert response.data['count'] == 1
 
     def test_search_products(self, api_client, db):
-        """Test searching products."""
+        """productの検索test。"""
         ProductFactory(name='Apple iPhone')
         ProductFactory(name='Samsung Galaxy')
 
@@ -547,9 +547,9 @@ class TestProductAPI:
         assert response.data['count'] == 1
 ```
 
-## Mocking and Patching
+## MockingとPatching
 
-### Mocking External Services
+### 外部serviceのmock
 
 ```python
 # tests/test_views.py
@@ -557,12 +557,12 @@ from unittest.mock import patch, Mock
 import pytest
 
 class TestPaymentView:
-    """Test payment view with mocked payment gateway."""
+    """payment gatewayをmockした決済viewのtest。"""
 
     @patch('apps.payments.services.stripe')
     def test_successful_payment(self, mock_stripe, client, user, product):
-        """Test successful payment with mocked Stripe."""
-        # Configure mock
+        """Stripeをmockした決済成功のtest。"""
+        # mockを設定する
         mock_stripe.Charge.create.return_value = {
             'id': 'ch_123',
             'status': 'succeeded',
@@ -580,7 +580,7 @@ class TestPaymentView:
 
     @patch('apps.payments.services.stripe')
     def test_failed_payment(self, mock_stripe, client, user, product):
-        """Test failed payment."""
+        """決済失敗のtest。"""
         mock_stripe.Charge.create.side_effect = Exception('Card declined')
 
         client.force_login(user)
@@ -593,7 +593,7 @@ class TestPaymentView:
         assert 'error' in response.url
 ```
 
-### Mocking Email Sending
+### Email送信のmock
 
 ```python
 # tests/test_email.py
@@ -602,7 +602,7 @@ from django.test import override_settings
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 def test_order_confirmation_email(db, order):
-    """Test order confirmation email."""
+    """注文確認emailのtest。"""
     order.send_confirmation_email()
 
     assert len(mail.outbox) == 1
@@ -612,7 +612,7 @@ def test_order_confirmation_email(db, order):
 
 ## Integration Testing
 
-### Full Flow Testing
+### 一連の流れのtest
 
 ```python
 # tests/test_integration.py
@@ -621,11 +621,11 @@ from django.urls import reverse
 from tests.factories import UserFactory, ProductFactory
 
 class TestCheckoutFlow:
-    """Test complete checkout flow."""
+    """checkout全体フローのtest。"""
 
     def test_guest_to_purchase_flow(self, client, db):
-        """Test complete flow from guest to purchase."""
-        # Step 1: Register
+        """ゲストから購入までの全フローのtest。"""
+        # Step 1: 登録
         response = client.post(reverse('users:register'), {
             'email': 'test@example.com',
             'password': 'testpass123',
@@ -633,31 +633,31 @@ class TestCheckoutFlow:
         })
         assert response.status_code == 302
 
-        # Step 2: Login
+        # Step 2: login
         response = client.post(reverse('users:login'), {
             'email': 'test@example.com',
             'password': 'testpass123',
         })
         assert response.status_code == 302
 
-        # Step 3: Browse products
+        # Step 3: productを閲覧する
         product = ProductFactory(price=100)
         response = client.get(reverse('products:detail', kwargs={'slug': product.slug}))
         assert response.status_code == 200
 
-        # Step 4: Add to cart
+        # Step 4: cartへ追加する
         response = client.post(reverse('cart:add'), {
             'product_id': product.id,
             'quantity': 1,
         })
         assert response.status_code == 302
 
-        # Step 5: Checkout
+        # Step 5: checkout
         response = client.get(reverse('checkout:review'))
         assert response.status_code == 200
         assert product.name in response.content.decode()
 
-        # Step 6: Complete purchase
+        # Step 6: 購入を完了する
         with patch('apps.checkout.services.process_payment') as mock_payment:
             mock_payment.return_value = True
             response = client.post(reverse('checkout:complete'))
@@ -666,65 +666,65 @@ class TestCheckoutFlow:
         assert Order.objects.filter(user__email='test@example.com').exists()
 ```
 
-## Testing Best Practices
+## Testのベストプラクティス
 
-### DO
+### すること
 
-- **Use factories**: Instead of manual object creation
-- **One assertion per test**: Keep tests focused
-- **Descriptive test names**: `test_user_cannot_delete_others_post`
-- **Test edge cases**: Empty inputs, None values, boundary conditions
-- **Mock external services**: Don't depend on external APIs
-- **Use fixtures**: Eliminate duplication
-- **Test permissions**: Ensure authorization works
-- **Keep tests fast**: Use `--reuse-db` and `--nomigrations`
+- **factoryを使う**: 手作業のobject生成に頼らない
+- **1 testに1 assertion**: testの焦点を保つ
+- **説明的なtest名**: `test_user_cannot_delete_others_post`
+- **境界条件をtestする**: 空入力、None、境界値
+- **外部serviceをmockする**: 外部APIに依存しない
+- **fixtureを使う**: 重複をなくす
+- **権限をtestする**: 認可が機能することを確認する
+- **testを高速に保つ**: `--reuse-db`と`--nomigrations`を使う
 
-### DON'T
+### しないこと
 
-- **Don't test Django internals**: Trust Django to work
-- **Don't test third-party code**: Trust libraries to work
-- **Don't ignore failing tests**: All tests must pass
-- **Don't make tests dependent**: Tests should run in any order
-- **Don't over-mock**: Mock only external dependencies
-- **Don't test private methods**: Test public interface
-- **Don't use production database**: Always use test database
+- **Django内部をtestしない**: Djangoの動作は信頼する
+- **third-party codeをtestしない**: ライブラリの動作は信頼する
+- **失敗するtestを放置しない**: すべてのtestを通す
+- **test間に依存を作らない**: 任意の順序で実行できるようにする
+- **過剰にmockしない**: mockは外部依存だけに使う
+- **private methodをtestしない**: 公開interfaceをtestする
+- **本番DBを使わない**: 常にtest用DBを使う
 
 ## Coverage
 
-### Coverage Configuration
+### Coverageの設定
 
 ```bash
-# Run tests with coverage
+# coverage付きでtestを実行する
 pytest --cov=apps --cov-report=html --cov-report=term-missing
 
-# Generate HTML report
+# HTMLレポートを生成する
 open htmlcov/index.html
 ```
 
-### Coverage Goals
+### Coverage目標
 
-| Component | Target Coverage |
+| Component | 目標coverage |
 |-----------|-----------------|
 | Models | 90%+ |
 | Serializers | 85%+ |
 | Views | 80%+ |
 | Services | 90%+ |
 | Utilities | 80%+ |
-| Overall | 80%+ |
+| 全体 | 80%+ |
 
-## Quick Reference
+## クイックリファレンス
 
-| Pattern | Usage |
+| Pattern | 用途 |
 |---------|-------|
-| `@pytest.mark.django_db` | Enable database access |
-| `client` | Django test client |
-| `api_client` | DRF API client |
-| `factory.create_batch(n)` | Create multiple objects |
-| `patch('module.function')` | Mock external dependencies |
-| `override_settings` | Temporarily change settings |
-| `force_authenticate()` | Bypass authentication in tests |
-| `assertRedirects` | Check for redirects |
-| `assertTemplateUsed` | Verify template usage |
-| `mail.outbox` | Check sent emails |
+| `@pytest.mark.django_db` | DBアクセスを有効化する |
+| `client` | Djangoのtest client |
+| `api_client` | DRFのAPI client |
+| `factory.create_batch(n)` | 複数objectを作る |
+| `patch('module.function')` | 外部依存をmockする |
+| `override_settings` | 一時的にsettingsを変える |
+| `force_authenticate()` | test中の認証を迂回する |
+| `assertRedirects` | redirectを確認する |
+| `assertTemplateUsed` | templateの使用を検証する |
+| `mail.outbox` | 送信済みemailを確認する |
 
-Remember: Tests are documentation. Good tests explain how your code should work. Keep them simple, readable, and maintainable.
+覚えておくこと: testはドキュメントである。良いtestはコードがどう動くべきかを説明する。単純で読みやすく保守しやすい状態に保つ。

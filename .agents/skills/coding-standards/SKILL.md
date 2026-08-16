@@ -1,102 +1,102 @@
 ---
 name: coding-standards
-description: Baseline cross-project coding conventions for naming, readability, immutability, and code-quality review. Use detailed frontend or backend skills for framework-specific patterns. Use when reviewing code quality or naming with no framework-specific skill that applies.
+description: 命名、可読性、不変性、コード品質レビューに関するプロジェクト横断のベースラインとなるコーディング規約。framework固有のパターンは詳細なfrontend・backendスキルを使う。適用できるframework固有スキルがない状態でコード品質や命名をレビューするときに使う。
 metadata:
   origin: ECC
 ---
 
 # Coding Standards & Best Practices
 
-Baseline coding conventions applicable across projects.
+プロジェクト横断で適用できるベースラインのコーディング規約。
 
-This skill is the shared floor, not the detailed framework playbook.
+このスキルは共通の土台であり、framework別の詳細なplaybookではない。
 
-- Use `frontend-patterns` for React, state, forms, rendering, and UI architecture.
-- Use `backend-patterns` or `api-design` for repository/service layers, endpoint design, validation, and server-specific concerns.
-- Use `rules/common/coding-style.md` when you need the shortest reusable rule layer instead of a full skill walkthrough.
+- React、state、form、rendering、UIアーキテクチャには`frontend-patterns`を使う。
+- repository/service層、endpoint設計、検証、server固有の関心事には`backend-patterns`または`api-design`を使う。
+- スキル全体を辿るのではなく最小限の再利用可能なルール層が必要なときは`rules/common/coding-style.md`を使う。
 
-## When to Activate
+## いつ使うか
 
-- Starting a new project or module
-- Reviewing code for quality and maintainability
-- Refactoring existing code to follow conventions
-- Enforcing naming, formatting, or structural consistency
-- Setting up linting, formatting, or type-checking rules
-- Onboarding new contributors to coding conventions
+- 新しいプロジェクトやmoduleを始めるとき
+- 品質と保守性の観点でコードをレビューするとき
+- 規約に沿って既存コードをrefactorするとき
+- 命名、formatting、構造の一貫性を徹底するとき
+- lint、formatting、型検査のルールを設定するとき
+- 新しいcontributorにコーディング規約を共有するとき
 
-## Scope Boundaries
+## 適用範囲の境界
 
-Activate this skill for:
-- descriptive naming
-- immutability defaults
-- readability, KISS, DRY, and YAGNI enforcement
-- error-handling expectations and code-smell review
+次の場合にこのスキルを使う。
+- 説明的な命名
+- 不変性のデフォルト
+- 可読性、KISS、DRY、YAGNIの徹底
+- エラー処理の期待値とcode smellのレビュー
 
-Do not use this skill as the primary source for:
-- React composition, hooks, or rendering patterns
-- backend architecture, API design, or database layering
-- domain-specific framework guidance when a narrower ECC skill already exists
+次の一次情報源としては使わない。
+- Reactのcomposition、hook、renderingパターン
+- backendアーキテクチャ、API設計、database層の設計
+- より狭いECCスキルが既に存在するdomain固有のframework指針
 
-## Code Quality Principles
+## コード品質の原則
 
-### 1. Readability First
-- Code is read more than written
-- Clear variable and function names
-- Self-documenting code preferred over comments
-- Consistent formatting
+### 1. 可読性を最優先する
+- コードは書かれる回数より読まれる回数が多い
+- 変数名と関数名を明確にする
+- コメントよりも自己説明的なコードを優先する
+- formattingを一貫させる
 
 ### 2. KISS (Keep It Simple, Stupid)
-- Simplest solution that works
-- Avoid over-engineering
-- No premature optimization
-- Easy to understand > clever code
+- 動作する最もシンプルな解を選ぶ
+- over-engineeringを避ける
+- 早すぎる最適化をしない
+- 賢いコードより理解しやすさを優先する
 
 ### 3. DRY (Don't Repeat Yourself)
-- Extract common logic into functions
-- Create reusable components
-- Share utilities across modules
-- Avoid copy-paste programming
+- 共通ロジックを関数へ抽出する
+- 再利用可能なcomponentを作る
+- utilityをmodule間で共有する
+- copy-pasteプログラミングを避ける
 
 ### 4. YAGNI (You Aren't Gonna Need It)
-- Don't build features before they're needed
-- Avoid speculative generality
-- Add complexity only when required
-- Start simple, refactor when needed
+- 必要になる前に機能を作らない
+- 投機的な一般化を避ける
+- 必要になったときだけ複雑さを足す
+- シンプルに始め、必要になったらrefactorする
 
-## TypeScript/JavaScript Standards
+## TypeScript/JavaScriptの規約
 
-### Variable Naming
+### 変数の命名
 
 ```typescript
-// PASS: GOOD: Descriptive names
+// PASS: GOOD: 説明的な名前
 const marketSearchQuery = 'election'
 const isUserAuthenticated = true
 const totalRevenue = 1000
 
-// FAIL: BAD: Unclear names
+// FAIL: BAD: 意味が不明瞭な名前
 const q = 'election'
 const flag = true
 const x = 1000
 ```
 
-### Function Naming
+### 関数の命名
 
 ```typescript
-// PASS: GOOD: Verb-noun pattern
+// PASS: GOOD: 動詞＋名詞のパターン
 async function fetchMarketData(marketId: string) { }
 function calculateSimilarity(a: number[], b: number[]) { }
 function isValidEmail(email: string): boolean { }
 
-// FAIL: BAD: Unclear or noun-only
+// FAIL: BAD: 不明瞭または名詞のみ
 async function market(id: string) { }
 function similarity(a, b) { }
 function email(e) { }
 ```
 
-### Immutability Pattern (CRITICAL)
+### 不変性のパターン（CRITICAL）
 
 ```typescript
-// PASS: ALWAYS use spread operator
+// PASS: 常にspread operatorを使う
 const updatedUser = {
   ...user,
   name: 'New Name'
@@ -104,15 +104,15 @@ const updatedUser = {
 
 const updatedArray = [...items, newItem]
 
-// FAIL: NEVER mutate directly
+// FAIL: 直接mutateしない
 user.name = 'New Name'  // BAD
 items.push(newItem)     // BAD
 ```
 
-### Error Handling
+### エラー処理
 
 ```typescript
-// PASS: GOOD: Comprehensive error handling
+// PASS: GOOD: 網羅的なエラー処理
 async function fetchData(url: string) {
   try {
     const response = await fetch(url)
@@ -128,33 +128,33 @@ async function fetchData(url: string) {
   }
 }
 
-// FAIL: BAD: No error handling
+// FAIL: BAD: エラー処理がない
 async function fetchData(url) {
   const response = await fetch(url)
   return response.json()
 }
 ```
 
-### Async/Await Best Practices
+### Async/Awaitのbest practice
 
 ```typescript
-// PASS: GOOD: Parallel execution when possible
+// PASS: GOOD: 可能なら並列実行する
 const [users, markets, stats] = await Promise.all([
   fetchUsers(),
   fetchMarkets(),
   fetchStats()
 ])
 
-// FAIL: BAD: Sequential when unnecessary
+// FAIL: BAD: 不要な逐次実行
 const users = await fetchUsers()
 const markets = await fetchMarkets()
 const stats = await fetchStats()
 ```
 
-### Type Safety
+### 型安全性
 
 ```typescript
-// PASS: GOOD: Proper types
+// PASS: GOOD: 適切な型付け
 interface Market {
   id: string
   name: string
@@ -163,21 +163,21 @@ interface Market {
 }
 
 function getMarket(id: string): Promise<Market> {
-  // Implementation
+  // 実装
 }
 
-// FAIL: BAD: Using 'any'
+// FAIL: BAD: 'any'の使用
 function getMarket(id: any): Promise<any> {
-  // Implementation
+  // 実装
 }
 ```
 
-## React Best Practices
+## Reactのbest practice
 
-### Component Structure
+### componentの構造
 
 ```typescript
-// PASS: GOOD: Functional component with types
+// PASS: GOOD: 型付きのfunctional component
 interface ButtonProps {
   children: React.ReactNode
   onClick: () => void
@@ -202,16 +202,16 @@ export function Button({
   )
 }
 
-// FAIL: BAD: No types, unclear structure
+// FAIL: BAD: 型がなく構造も不明瞭
 export function Button(props) {
   return <button onClick={props.onClick}>{props.children}</button>
 }
 ```
 
-### Custom Hooks
+### custom hook
 
 ```typescript
-// PASS: GOOD: Reusable custom hook
+// PASS: GOOD: 再利用可能なcustom hook
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
@@ -226,55 +226,55 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-// Usage
+// 使用例
 const debouncedQuery = useDebounce(searchQuery, 500)
 ```
 
-### State Management
+### state管理
 
 ```typescript
-// PASS: GOOD: Proper state updates
+// PASS: GOOD: 適切なstate更新
 const [count, setCount] = useState(0)
 
-// Functional update for state based on previous state
+// 直前のstateに基づく場合はfunctional updateを使う
 setCount(prev => prev + 1)
 
-// FAIL: BAD: Direct state reference
-setCount(count + 1)  // Can be stale in async scenarios
+// FAIL: BAD: stateを直接参照する
+setCount(count + 1)  // 非同期処理では古い値になりうる
 ```
 
-### Conditional Rendering
+### 条件付きrendering
 
 ```typescript
-// PASS: GOOD: Clear conditional rendering
+// PASS: GOOD: 明確な条件付きrendering
 {isLoading && <Spinner />}
 {error && <ErrorMessage error={error} />}
 {data && <DataDisplay data={data} />}
 
-// FAIL: BAD: Ternary hell
+// FAIL: BAD: 三項演算子の入れ子地獄
 {isLoading ? <Spinner /> : error ? <ErrorMessage error={error} /> : data ? <DataDisplay data={data} /> : null}
 ```
 
-## API Design Standards
+## API設計の規約
 
-### REST API Conventions
+### REST APIの規約
 
 ```
-GET    /api/markets              # List all markets
-GET    /api/markets/:id          # Get specific market
-POST   /api/markets              # Create new market
-PUT    /api/markets/:id          # Update market (full)
-PATCH  /api/markets/:id          # Update market (partial)
-DELETE /api/markets/:id          # Delete market
+GET    /api/markets              # 全marketの一覧取得
+GET    /api/markets/:id          # 特定のmarketを取得
+POST   /api/markets              # 新しいmarketを作成
+PUT    /api/markets/:id          # marketを更新（全体）
+PATCH  /api/markets/:id          # marketを更新（部分）
+DELETE /api/markets/:id          # marketを削除
 
-# Query parameters for filtering
+# 絞り込み用のquery parameter
 GET /api/markets?status=active&limit=10&offset=0
 ```
 
-### Response Format
+### responseの形式
 
 ```typescript
-// PASS: GOOD: Consistent response structure
+// PASS: GOOD: 一貫したresponse構造
 interface ApiResponse<T> {
   success: boolean
   data?: T
@@ -286,26 +286,26 @@ interface ApiResponse<T> {
   }
 }
 
-// Success response
+// 成功response
 return NextResponse.json({
   success: true,
   data: markets,
   meta: { total: 100, page: 1, limit: 10 }
 })
 
-// Error response
+// エラーresponse
 return NextResponse.json({
   success: false,
   error: 'Invalid request'
 }, { status: 400 })
 ```
 
-### Input Validation
+### 入力検証
 
 ```typescript
 import { z } from 'zod'
 
-// PASS: GOOD: Schema validation
+// PASS: GOOD: schemaによる検証
 const CreateMarketSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().min(1).max(2000),
@@ -318,7 +318,7 @@ export async function POST(request: Request) {
 
   try {
     const validated = CreateMarketSchema.parse(body)
-    // Proceed with validated data
+    // 検証済みdataで処理を続ける
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({
@@ -331,68 +331,68 @@ export async function POST(request: Request) {
 }
 ```
 
-## File Organization
+## ファイル構成
 
-### Project Structure
+### プロジェクト構造
 
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── markets/           # Market pages
-│   └── (auth)/           # Auth pages (route groups)
-├── components/            # React components
-│   ├── ui/               # Generic UI components
-│   ├── forms/            # Form components
-│   └── layouts/          # Layout components
-├── hooks/                # Custom React hooks
-├── lib/                  # Utilities and configs
-│   ├── api/             # API clients
-│   ├── utils/           # Helper functions
-│   └── constants/       # Constants
-├── types/                # TypeScript types
-└── styles/              # Global styles
+│   ├── api/               # API route
+│   ├── markets/           # marketページ
+│   └── (auth)/           # 認証ページ（route group）
+├── components/            # React component
+│   ├── ui/               # 汎用UI component
+│   ├── forms/            # form component
+│   └── layouts/          # layout component
+├── hooks/                # custom React hook
+├── lib/                  # utilityと設定
+│   ├── api/             # API client
+│   ├── utils/           # helper関数
+│   └── constants/       # 定数
+├── types/                # TypeScriptの型
+└── styles/              # global style
 ```
 
-### File Naming
+### ファイルの命名
 
 ```
-components/Button.tsx          # PascalCase for components
-hooks/useAuth.ts              # camelCase with 'use' prefix
-lib/formatDate.ts             # camelCase for utilities
-types/market.types.ts         # camelCase with .types suffix
+components/Button.tsx          # componentはPascalCase
+hooks/useAuth.ts              # camelCaseで'use'をprefixにする
+lib/formatDate.ts             # utilityはcamelCase
+types/market.types.ts         # camelCaseに.types suffixを付ける
 ```
 
-## Comments & Documentation
+## コメントとドキュメント
 
-### When to Comment
+### コメントを書くとき
 
 ```typescript
-// PASS: GOOD: Explain WHY, not WHAT
-// Use exponential backoff to avoid overwhelming the API during outages
+// PASS: GOOD: WHATではなくWHYを説明する
+// 障害時にAPIへ負荷をかけないようexponential backoffを使う
 const delay = Math.min(1000 * Math.pow(2, retryCount), 30000)
 
-// Deliberately using mutation here for performance with large arrays
+// 大きな配列での性能のため意図的にmutationを使っている
 items.push(newItem)
 
-// FAIL: BAD: Stating the obvious
-// Increment counter by 1
+// FAIL: BAD: 自明なことを書いている
+// counterを1増やす
 count++
 
-// Set name to user's name
+// nameにuserのnameを設定する
 name = user.name
 ```
 
-### JSDoc for Public APIs
+### 公開APIのJSDoc
 
 ```typescript
 /**
- * Searches markets using semantic similarity.
+ * 意味的類似度でmarketを検索する。
  *
- * @param query - Natural language search query
- * @param limit - Maximum number of results (default: 10)
- * @returns Array of markets sorted by similarity score
- * @throws {Error} If OpenAI API fails or Redis unavailable
+ * @param query - 自然言語の検索query
+ * @param limit - 結果の最大件数（default: 10）
+ * @returns 類似度スコア順に並べたmarketの配列
+ * @throws {Error} OpenAI APIが失敗した場合、またはRedisが利用不可の場合
  *
  * @example
  * ```typescript
@@ -404,35 +404,35 @@ export async function searchMarkets(
   query: string,
   limit: number = 10
 ): Promise<Market[]> {
-  // Implementation
+  // 実装
 }
 ```
 
-## Performance Best Practices
+## performanceのbest practice
 
-### Memoization
+### memoization
 
 ```typescript
 import { useMemo, useCallback } from 'react'
 
-// PASS: GOOD: Memoize expensive computations
-// Copy before sorting - Array.prototype.sort mutates in place
+// PASS: GOOD: 重い計算をmemoizeする
+// sortの前にコピーする - Array.prototype.sortは元の配列をmutateする
 const sortedMarkets = useMemo(() => {
   return [...markets].sort((a, b) => b.volume - a.volume)
 }, [markets])
 
-// PASS: GOOD: Memoize callbacks
+// PASS: GOOD: callbackをmemoizeする
 const handleSearch = useCallback((query: string) => {
   setSearchQuery(query)
 }, [])
 ```
 
-### Lazy Loading
+### 遅延読み込み
 
 ```typescript
 import { lazy, Suspense } from 'react'
 
-// PASS: GOOD: Lazy load heavy components
+// PASS: GOOD: 重いcomponentを遅延読み込みする
 const HeavyChart = lazy(() => import('./HeavyChart'))
 
 export function Dashboard() {
@@ -444,24 +444,24 @@ export function Dashboard() {
 }
 ```
 
-### Database Queries
+### databaseのquery
 
 ```typescript
-// PASS: GOOD: Select only needed columns
+// PASS: GOOD: 必要なcolumnだけを選択する
 const { data } = await supabase
   .from('markets')
   .select('id, name, status')
   .limit(10)
 
-// FAIL: BAD: Select everything
+// FAIL: BAD: すべてを選択する
 const { data } = await supabase
   .from('markets')
   .select('*')
 ```
 
-## Testing Standards
+## テストの規約
 
-### Test Structure (AAA Pattern)
+### テストの構造（AAAパターン）
 
 ```typescript
 test('calculates similarity correctly', () => {
@@ -477,31 +477,31 @@ test('calculates similarity correctly', () => {
 })
 ```
 
-### Test Naming
+### テストの命名
 
 ```typescript
-// PASS: GOOD: Descriptive test names
+// PASS: GOOD: 説明的なテスト名
 test('returns empty array when no markets match query', () => { })
 test('throws error when OpenAI API key is missing', () => { })
 test('falls back to substring search when Redis unavailable', () => { })
 
-// FAIL: BAD: Vague test names
+// FAIL: BAD: 曖昧なテスト名
 test('works', () => { })
 test('test search', () => { })
 ```
 
-## Code Smell Detection
+## code smellの検出
 
-Watch for these anti-patterns:
+次のanti-patternに注意する。
 
-### 1. Long Functions
+### 1. 長い関数
 ```typescript
-// FAIL: BAD: Function > 50 lines
+// FAIL: BAD: 50行を超える関数
 function processMarketData() {
-  // 100 lines of code
+  // 100行のコード
 }
 
-// PASS: GOOD: Split into smaller functions
+// PASS: GOOD: 小さな関数へ分割する
 function processMarketData() {
   const validated = validateData()
   const transformed = transformData(validated)
@@ -509,38 +509,38 @@ function processMarketData() {
 }
 ```
 
-### 2. Deep Nesting
+### 2. 深いネスト
 ```typescript
-// FAIL: BAD: 5+ levels of nesting
+// FAIL: BAD: 5段階以上のネスト
 if (user) {
   if (user.isAdmin) {
     if (market) {
       if (market.isActive) {
         if (hasPermission) {
-          // Do something
+          // 何らかの処理
         }
       }
     }
   }
 }
 
-// PASS: GOOD: Early returns
+// PASS: GOOD: 早期return
 if (!user) return
 if (!user.isAdmin) return
 if (!market) return
 if (!market.isActive) return
 if (!hasPermission) return
 
-// Do something
+// 何らかの処理
 ```
 
-### 3. Magic Numbers
+### 3. マジックナンバー
 ```typescript
-// FAIL: BAD: Unexplained numbers
+// FAIL: BAD: 説明のない数値
 if (retryCount > 3) { }
 setTimeout(callback, 500)
 
-// PASS: GOOD: Named constants
+// PASS: GOOD: 名前付き定数
 const MAX_RETRIES = 3
 const DEBOUNCE_DELAY_MS = 500
 
@@ -548,4 +548,4 @@ if (retryCount > MAX_RETRIES) { }
 setTimeout(callback, DEBOUNCE_DELAY_MS)
 ```
 
-**Remember**: Code quality is not negotiable. Clear, maintainable code enables rapid development and confident refactoring.
+**重要**: コード品質は交渉の余地がない。明確で保守しやすいコードが、素早い開発と自信を持ったrefactorを可能にする。

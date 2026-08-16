@@ -1,32 +1,32 @@
 ---
 name: django-celery
-description: Django + Celery async task patterns — configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing. Use when adding background jobs, scheduled tasks, or async processing to a Django app.
+description: Django + Celeryの非同期taskパターン — 設定、task設計、beatスケジューリング、retry、canvas workflow、監視、テスト。Djangoアプリへバックグラウンドジョブ、定期task、非同期処理を追加するときに使う。
 metadata:
   origin: ECC
 ---
 
 # Django + Celery Async Task Patterns
 
-Production-grade patterns for background task processing in Django using Celery with Redis or RabbitMQ.
+RedisまたはRabbitMQを使い、DjangoでCeleryによるバックグラウンドtask処理を本番品質で実装するためのパターン。
 
-## When to Activate
+## 起動タイミング
 
-- Adding background jobs or async processing to a Django app
-- Implementing periodic/scheduled tasks
-- Offloading slow operations (email, PDF generation, API calls) from request cycle
-- Setting up Celery Beat for cron-like scheduling
-- Debugging task failures, retries, or queue backlogs
-- Writing tests for Celery tasks
+- Djangoアプリへバックグラウンドジョブや非同期処理を追加するとき
+- 定期実行・スケジュールtaskを実装するとき
+- 遅い処理（メール送信、PDF生成、API呼び出し）をリクエストサイクルから切り離すとき
+- cron的なスケジューリングのためにCelery Beatを構成するとき
+- taskの失敗、retry、キューの滞留をデバッグするとき
+- Celery taskのテストを書くとき
 
-## Project Setup
+## プロジェクト構成
 
-### Installation
+### インストール
 
 ```bash
 pip install 'celery[redis]' django-celery-results django-celery-beat
 ```
 
-### `celery.py` — App Entrypoint
+### `celery.py` — アプリのエントリポイント
 
 ```python
 # config/celery.py
@@ -37,7 +37,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
 
 app = Celery('myproject')
 app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()  # Discovers tasks.py in each INSTALLED_APP
+app.autodiscover_tasks()  # 各INSTALLED_APPのtasks.pyを探索する
 
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
@@ -51,59 +51,59 @@ from .celery import app as celery_app
 __all__ = ('celery_app',)
 ```
 
-### Django Settings
+### Djangoの設定
 
 ```python
 # config/settings/base.py
 
-# Broker (Redis recommended for production)
+# Broker（本番ではRedisを推奨）
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='django-db')
 
-# Serialization
+# シリアライズ
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
-# Task behavior
+# taskの挙動
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60        # Hard limit: 30 min
-CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60   # Soft limit: sends SoftTimeLimitExceeded
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1   # Prevent worker hoarding long tasks
-CELERY_TASK_ACKS_LATE = True            # Re-queue on worker crash
+CELERY_TASK_TIME_LIMIT = 30 * 60        # ハード上限: 30分
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60   # ソフト上限: SoftTimeLimitExceededを送る
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1   # workerが長いtaskを抱え込むのを防ぐ
+CELERY_TASK_ACKS_LATE = True            # workerがクラッシュしたら再キューする
 
-# Result persistence
-CELERY_RESULT_EXPIRES = 60 * 60 * 24   # Keep results 24 hours
+# 結果の保持
+CELERY_RESULT_EXPIRES = 60 * 60 * 24   # 結果を24時間保持する
 
-# Beat scheduler (for periodic tasks)
+# Beat scheduler（定期task用）
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# Installed apps
+# インストール済みアプリ
 INSTALLED_APPS += [
     'django_celery_results',
     'django_celery_beat',
 ]
 ```
 
-### Running Workers
+### workerの実行
 
 ```bash
-# Start worker (development)
+# workerを起動する（開発）
 celery -A config worker --loglevel=info
 
-# Start beat scheduler (periodic tasks)
+# beat schedulerを起動する（定期task）
 celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
-# Combined worker + beat (dev only, never production)
+# worker + beatの同時起動（開発のみ。本番では使わない）
 celery -A config worker --beat --loglevel=info
 
-# Production: multiple workers with concurrency
+# 本番: 並行度を指定した複数worker
 celery -A config worker --loglevel=warning --concurrency=4 -Q default,high_priority
 ```
 
-## Task Design Patterns
+## task設計パターン
 
-### Basic Task
+### 基本のtask
 
 ```python
 # apps/notifications/tasks.py
@@ -122,24 +122,24 @@ def send_welcome_email(user_id: int) -> None:
         user = User.objects.get(pk=user_id)
     except User.DoesNotExist:
         logger.warning('send_welcome_email: user %s not found', user_id)
-        return  # Idempotent — do not raise, task already impossible to complete
+        return  # 冪等 — raiseしない。もはや完了不可能なtask
 
     EmailService.send_welcome(user)
     logger.info('Welcome email sent to user %s', user_id)
 ```
 
-### Retryable Task
+### retryするtask
 
 ```python
 @shared_task(
     bind=True,
     name='integrations.sync_to_crm',
     max_retries=5,
-    default_retry_delay=60,       # seconds before first retry
+    default_retry_delay=60,       # 初回retryまでの秒数
     autoretry_for=(ConnectionError, TimeoutError),
-    retry_backoff=True,           # exponential backoff
-    retry_backoff_max=600,        # cap at 10 minutes
-    retry_jitter=True,            # randomise to avoid thundering herd
+    retry_backoff=True,           # 指数バックオフ
+    retry_backoff_max=600,        # 上限10分
+    retry_jitter=True,            # thundering herdを避けるためランダム化する
 )
 def sync_contact_to_crm(self, contact_id: int) -> dict:
     """Sync contact to external CRM with retry on transient failures."""
@@ -149,13 +149,13 @@ def sync_contact_to_crm(self, contact_id: int) -> dict:
         result = CRMClient().sync(contact_id)
         return result
     except CRMClient.RateLimitError as exc:
-        # Specific retry delay from response header
+        # responseヘッダから固有のretry待ち時間を取る
         raise self.retry(exc=exc, countdown=int(exc.retry_after))
 ```
 
-### Idempotent Task Pattern
+### 冪等なtaskのパターン
 
-Design tasks so they can safely run multiple times with the same inputs:
+同じ入力で複数回実行しても安全になるようtaskを設計する:
 
 ```python
 @shared_task(name='orders.mark_shipped')
@@ -165,7 +165,7 @@ def mark_order_shipped(order_id: int, tracking_number: str) -> None:
 
     updated = Order.objects.filter(
         pk=order_id,
-        status=Order.Status.PROCESSING,    # Guard: only update if not already shipped
+        status=Order.Status.PROCESSING,    # ガード: 未出荷のときだけ更新する
     ).update(
         status=Order.Status.SHIPPED,
         tracking_number=tracking_number,
@@ -175,7 +175,7 @@ def mark_order_shipped(order_id: int, tracking_number: str) -> None:
         logger.info('mark_order_shipped: order %s already shipped or not found', order_id)
 ```
 
-### Task with Soft Time Limit
+### ソフトタイムリミット付きのtask
 
 ```python
 from celery.exceptions import SoftTimeLimitExceeded
@@ -194,34 +194,34 @@ def generate_pdf_report(self, report_id: int) -> str:
         path = PDFGenerator.build(report_id)
         return path
     except SoftTimeLimitExceeded:
-        # Clean up partial files before hard kill
+        # 強制終了の前に中途半端なファイルを片付ける
         PDFGenerator.cleanup(report_id)
         raise
 ```
 
-## Calling Tasks
+## taskの呼び出し
 
 ```python
 from datetime import timedelta
 from django.utils import timezone
 
-# Fire and forget (async)
+# 投げっぱなし（非同期）
 send_welcome_email.delay(user.pk)
 
-# Schedule in the future
-send_reminder.apply_async(args=[user.pk], countdown=3600)  # 1 hour from now
+# 将来の実行を予約する
+send_reminder.apply_async(args=[user.pk], countdown=3600)  # 1時間後
 send_reminder.apply_async(args=[user.pk], eta=timezone.now() + timedelta(days=1))
 
-# Apply with queue routing
+# キューを指定して実行する
 sync_contact_to_crm.apply_async(args=[contact.pk], queue='high_priority')
 
-# Run synchronously (tests / debugging only)
+# 同期実行（テスト・デバッグのみ）
 result = generate_pdf_report.apply(args=[report.pk])
 ```
 
-## Beat Scheduling (Periodic Tasks)
+## Beatによるスケジューリング（定期task）
 
-### Code-Defined Schedule
+### コードで定義するスケジュール
 
 ```python
 # config/settings/base.py
@@ -230,11 +230,11 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'cleanup-expired-sessions': {
         'task': 'users.cleanup_expired_sessions',
-        'schedule': crontab(hour=2, minute=0),   # 2am daily
+        'schedule': crontab(hour=2, minute=0),   # 毎日午前2時
     },
     'sync-inventory': {
         'task': 'products.sync_inventory',
-        'schedule': 60.0,                         # every 60 seconds
+        'schedule': 60.0,                         # 60秒ごと
     },
     'weekly-digest': {
         'task': 'notifications.send_weekly_digest',
@@ -243,10 +243,10 @@ CELERY_BEAT_SCHEDULE = {
 }
 ```
 
-### Database-Defined Schedule (via django-celery-beat)
+### DBで定義するスケジュール（django-celery-beat経由）
 
 ```python
-# Manage periodic tasks from Django admin or code
+# Django adminまたはコードから定期taskを管理する
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 import json
 
@@ -266,35 +266,35 @@ PeriodicTask.objects.update_or_create(
 )
 ```
 
-## Canvas: Chaining and Grouping Tasks
+## Canvas: taskの連結とグループ化
 
 ```python
 from celery import chain, group, chord
 
-# Chain: run tasks sequentially, passing results
+# Chain: 結果を渡しながらtaskを順に実行する
 pipeline = chain(
     fetch_data.s(source_id),
-    transform_data.s(),          # receives fetch_data result as first arg
+    transform_data.s(),          # fetch_dataの結果を第1引数として受け取る
     load_to_warehouse.s(),
 )
 pipeline.delay()
 
-# Group: run tasks in parallel
+# Group: taskを並列に実行する
 parallel = group(
     send_welcome_email.s(user_id)
     for user_id in new_user_ids
 )
 parallel.delay()
 
-# Chord: parallel tasks + callback when all complete
+# Chord: 並列taskの完了後にcallbackを実行する
 result = chord(
     group(process_chunk.s(chunk) for chunk in data_chunks),
-    aggregate_results.s(),       # called with list of chunk results
+    aggregate_results.s(),       # 各chunkの結果のリストを受け取る
 )
 result.delay()
 ```
 
-## Error Handling and Dead Letter Queue
+## エラー処理とdead letter queue
 
 ```python
 # apps/core/tasks.py
@@ -315,7 +315,7 @@ def on_task_failure(sender, task_id, exception, args, kwargs, traceback, einfo, 
 ```
 
 ```python
-# Route failed tasks to dead-letter queue after max retries
+# retry上限に達した失敗taskをdead-letter queueへ回す
 @shared_task(
     bind=True,
     max_retries=3,
@@ -328,19 +328,19 @@ def charge_card(self, order_id: int) -> None:
         _do_charge(order_id)
     except Exception as exc:
         if self.request.retries >= self.max_retries:
-            # Persist to dead-letter table for manual review
+            # 手動確認のためdead-letterテーブルへ保存する
             FailedCharge.objects.create(
                 order_id=order_id,
                 error=str(exc),
                 task_id=self.request.id,
             )
-            return  # Don't raise — task is permanently failed
+            return  # raiseしない — このtaskは恒久的な失敗
         raise self.retry(exc=exc)
 ```
 
-## Testing Celery Tasks
+## Celery taskのテスト
 
-### Unit Testing (No Broker)
+### unit test（brokerなし）
 
 ```python
 # tests/test_tasks.py
@@ -359,15 +359,15 @@ class TestSendWelcomeEmail:
     @pytest.mark.django_db
     def test_skips_missing_user_gracefully(self):
         """Should not raise when user is deleted between enqueue and execute."""
-        send_welcome_email(99999)  # Non-existent user — must not raise
+        send_welcome_email(99999)  # 存在しないuser — raiseしてはならない
 ```
 
-### Integration Testing with CELERY_TASK_ALWAYS_EAGER
+### CELERY_TASK_ALWAYS_EAGERによるintegration test
 
 ```python
 # config/settings/test.py
-CELERY_TASK_ALWAYS_EAGER = True      # Run tasks synchronously in tests
-CELERY_TASK_EAGER_PROPAGATES = True  # Re-raise exceptions from tasks
+CELERY_TASK_ALWAYS_EAGER = True      # テストではtaskを同期実行する
+CELERY_TASK_EAGER_PROPAGATES = True  # taskの例外を再throwする
 
 # tests/test_integration.py
 @pytest.mark.django_db
@@ -382,7 +382,7 @@ def test_registration_triggers_welcome_email(client):
     mock_email.send_welcome.assert_called_once()
 ```
 
-### Testing Retries
+### retryのテスト
 
 ```python
 @pytest.mark.django_db
@@ -393,66 +393,66 @@ def test_task_retries_on_connection_error():
         with pytest.raises(ConnectionError):
             sync_contact_to_crm.apply(args=[1], throw=True)
 
-        assert mock_sync.call_count == 1  # First attempt only when eager
+        assert mock_sync.call_count == 1  # eager時は初回のみ
 ```
 
-## Monitoring
+## 監視
 
 ```bash
-# Inspect active workers and queues
+# 稼働中のworkerとキューを調べる
 celery -A config inspect active
 celery -A config inspect stats
 celery -A config inspect reserved
 
-# Check queue lengths (Redis)
+# キューの長さを確認する（Redis）
 redis-cli llen celery
 
-# Flower: web-based real-time monitor
+# Flower: Webベースのリアルタイム監視
 pip install flower
 celery -A config flower --port=5555
 ```
 
-## Anti-Patterns
+## アンチパターン
 
 ```python
-# BAD: Passing model instances — they may be stale by execution time
-send_welcome_email.delay(user)        # Never pass ORM objects
-send_welcome_email.delay(user.pk)     # Always pass PKs
+# BAD: modelインスタンスを渡す — 実行時には古くなっている可能性がある
+send_welcome_email.delay(user)        # ORMオブジェクトは渡さない
+send_welcome_email.delay(user.pk)     # 常にPKを渡す
 
-# BAD: Calling tasks synchronously in production views
-result = generate_report.apply()      # Blocks the request thread
+# BAD: 本番のviewでtaskを同期実行する
+result = generate_report.apply()      # リクエストスレッドをブロックする
 
-# BAD: Non-idempotent task without guards
+# BAD: ガードのない非冪等なtask
 @shared_task
 def charge_and_fulfill(order_id):
-    order.charge()     # May charge twice if task retries!
+    order.charge()     # retryすると二重課金になりうる
     order.fulfill()
 
-# GOOD: Idempotent with status guard
+# GOOD: statusガード付きで冪等にする
 @shared_task
 def charge_and_fulfill(order_id):
     order = Order.objects.select_for_update().get(pk=order_id)
     if order.status != Order.Status.PENDING:
-        return  # Already processed
+        return  # 処理済み
     order.charge()
     order.fulfill()
 ```
 
-## Production Checklist
+## 本番チェックリスト
 
-| Check | Setting |
+| 確認項目 | 設定 |
 |-------|---------|
-| Worker restarts on crash | `supervisord` or `systemd` unit |
-| `CELERY_TASK_ACKS_LATE = True` | Re-queue tasks on worker crash |
-| `CELERY_WORKER_PREFETCH_MULTIPLIER = 1` | Fair distribution of long tasks |
-| Separate queues per priority | `-Q default,high_priority,low_priority` |
-| `CELERY_TASK_SOFT_TIME_LIMIT` set | Graceful timeout before hard kill |
-| Sentry integration | Capture all `task_failure` signals |
-| Flower or other monitor | Visibility into queue depths |
-| Beat runs on single node only | Prevents duplicate scheduled task execution |
+| クラッシュ時のworker再起動 | `supervisord`または`systemd` unit |
+| `CELERY_TASK_ACKS_LATE = True` | workerクラッシュ時にtaskを再キューする |
+| `CELERY_WORKER_PREFETCH_MULTIPLIER = 1` | 長いtaskを公平に分配する |
+| 優先度ごとのキュー分離 | `-Q default,high_priority,low_priority` |
+| `CELERY_TASK_SOFT_TIME_LIMIT`の設定 | 強制終了前の穏当なタイムアウト |
+| Sentry連携 | すべての`task_failure` signalを捕捉する |
+| Flowerなどの監視 | キューの滞留を可視化する |
+| Beatは単一ノードでのみ実行 | 定期taskの二重実行を防ぐ |
 
-## Related Skills
+## 関連skill
 
-- `django-patterns` — ORM, service layer, and project structure
-- `django-tdd` — Testing Django models, views, and services
-- `python-testing` — pytest configuration and fixtures
+- `django-patterns` — ORM、service層、プロジェクト構成
+- `django-tdd` — Djangoのmodel、view、serviceのテスト
+- `python-testing` — pytestの設定とfixture

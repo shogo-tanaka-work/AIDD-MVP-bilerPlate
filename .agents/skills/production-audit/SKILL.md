@@ -1,58 +1,44 @@
 ---
 name: production-audit
-description: Local-evidence production readiness audit for shipped apps, pre-launch reviews, post-merge checks, and "what breaks in prod?" questions without sending repo data to an external audit service. Use when auditing production readiness before launch, after a merge, or when asked what breaks in prod.
+description: リリース済みappの本番準備監査、launch前レビュー、merge後チェック、「本番で何が壊れるか」という問いに、リポジトリのデータを外部の監査サービスへ送らずローカルの根拠だけで答える。launch前・merge後の本番準備を監査するとき、本番で何が壊れるかを問われたときに使う。
 metadata:
   origin: community
 ---
 
-# Production Audit
+# 本番監査
 
-Use this skill when the user asks whether an application is ready to ship, what
-could break in production, or what must be fixed before a launch. This is a
-maintainer-safe rewrite of the stale community production-audit idea: it keeps
-the useful production-readiness lens and removes unpinned external execution and
-third-party data sharing.
+アプリケーションがリリース可能か、本番で何が壊れうるか、launch前に何を直すべきかをユーザーが尋ねたときにこのskillを使う。これは陳腐化したcommunity版production-auditのmaintainer-safeな書き直しであり、本番準備という有用な観点を残しつつ、pin留めされていない外部実行と第三者へのデータ共有を取り除いている。
 
-## When to Use
+## 使う場面
 
-- The user asks "is this production-ready", "what would break in prod", "what
-  did we miss", "audit this repo", or "ready to ship?"
-- A feature was merged and needs a pre-deploy or post-merge risk pass.
-- A public launch, demo, customer rollout, or investor walkthrough is close.
-- CI is green but the user wants production risk, not only test status.
-- A deployed URL, release branch, PR, or current checkout is available for
-  evidence gathering.
+- ユーザーが「本番準備できているか」「本番で何が壊れるか」「見落としは何か」「このリポジトリを監査して」「リリースして良いか」と尋ねたとき。
+- 機能がmergeされ、deploy前またはmerge後のリスク確認が必要なとき。
+- 公開launch、demo、顧客展開、投資家向けデモが近いとき。
+- CIはgreenだが、ユーザーがtest状況ではなく本番リスクを知りたいとき。
+- deploy済みURL、releaseブランチ、PR、現在のcheckoutが根拠収集に使えるとき。
 
-## When Not to Use
+## 使わない場面
 
-- During active implementation when the right lens is line-level secure coding;
-  use `security-review` first.
-- For pure libraries, templates, docs-only repos, or scaffolds unless the user
-  wants packaging/release readiness rather than application readiness.
-- When the user asks for a formal compliance audit. This skill is engineering
-  triage, not legal, financial, medical, or regulatory certification.
-- When the only available evidence is a product idea with no repo, deployment,
-  CI, or runtime surface.
+- 実装中で、line単位のsecure codingの観点が適切なとき。まず`security-review`を使う。
+- 純粋なlibrary、template、docsのみのリポジトリ、scaffoldの場合。ただしユーザーがapplicationの準備状況ではなくpackaging/releaseの準備状況を求める場合を除く。
+- ユーザーが正式なcompliance監査を求めているとき。このskillはエンジニアリングのトリアージであり、法務・財務・医療・規制の認証ではない。
+- 唯一の根拠がプロダクトのアイデアだけで、リポジトリ・deploy・CI・実行環境が存在しないとき。
 
-## How It Works
+## 進め方
 
-Build the audit from local and user-authorized evidence. Do not run unpinned
-remote code, upload repository contents to third-party services, or call
-external scanners unless the user explicitly approves that specific tool and
-data flow.
+監査はローカルの根拠とユーザーが許可した根拠から組み立てる。pin留めされていないリモートコードを実行したり、リポジトリの内容を第三者サービスへアップロードしたり、外部scannerを呼び出したりしない。ただしユーザーがそのツールとデータフローを明示的に承認した場合を除く。
 
-Use this order:
+次の順序で進める。
 
-1. Establish the release surface.
-2. Read recent changes and current branch state.
-3. Inspect runtime, auth, data, payment, background-job, AI, and deployment
-   boundaries that actually exist in the repo.
-4. Check CI, tests, migrations, environment documentation, and rollback path.
-5. Produce a short ship/block recommendation with specific fixes.
+1. releaseの対象範囲を確定する。
+2. 直近の変更と現在のブランチ状態を読む。
+3. リポジトリに実際に存在するruntime、auth、data、payment、background job、AI、deployの境界を調べる。
+4. CI、test、migration、環境変数のドキュメント、rollback経路を確認する。
+5. 具体的な修正を伴うship/blockの推奨を短くまとめる。
 
-## Evidence Checklist
+## 根拠チェックリスト
 
-Start with cheap, local signals:
+安価なローカルシグナルから始める。
 
 ```text
 git status --short --branch
@@ -60,115 +46,104 @@ git log --oneline --decorate -20
 git diff --stat origin/main...HEAD
 ```
 
-Then inspect the project-specific surface:
+次にプロジェクト固有の領域を調べる。
 
-- Package scripts, CI workflows, release scripts, Docker files, and deployment
-  manifests.
-- API routes, webhooks, auth middleware, background workers, cron jobs, and
-  database migrations.
-- Environment variable documentation and startup checks.
-- Observability hooks, error reporting, logs, health checks, and dashboards.
-- Rollback, seed, migration, and backfill instructions.
-- E2E coverage for the user paths that matter most.
+- package script、CI workflow、releaseスクリプト、Dockerファイル、deploy manifest。
+- API route、webhook、auth middleware、background worker、cron job、database migration。
+- 環境変数のドキュメントと起動時チェック。
+- observability hook、error reporting、log、health check、dashboard。
+- rollback、seed、migration、backfillの手順。
+- 最も重要なユーザー導線のE2E coverage。
 
-If a deployed URL is in scope, use browser or HTTP checks only against that URL
-and avoid credentialed actions unless the user supplies a safe test account.
+deploy済みURLが対象範囲に含まれる場合、browserまたはHTTPによる確認はそのURLに限定し、ユーザーが安全なテストアカウントを提供しない限り認証を伴う操作は避ける。
 
-## Risk Lenses
+## リスクの観点
 
-### Security And Auth
+### セキュリティと認証
 
-- Are public routes, API routes, and admin routes clearly separated?
-- Are auth and authorization enforced server-side?
-- Are secrets kept out of client bundles, logs, example output, and checked-in
-  files?
-- Are rate limits, CSRF protections, CORS policy, and upload validation present
-  where the app needs them?
-- Does the AI or agent surface defend against prompt injection, tool abuse, and
-  untrusted content crossing into privileged actions?
+- 公開route、API route、admin routeが明確に分離されているか。
+- 認証と認可がserver-sideで強制されているか。
+- 秘密情報がclient bundle、log、サンプル出力、commit済みファイルに入っていないか。
+- 必要な箇所にrate limit、CSRF対策、CORSポリシー、uploadの検証があるか。
+- AIやagentの領域が、prompt injection、tool悪用、信頼できないコンテンツが特権的な操作へ流れ込むことを防いでいるか。
 
-### Data Integrity
+### データ整合性
 
-- Do migrations run forward cleanly and have a rollback or recovery plan?
-- Are destructive migrations, backfills, and data imports staged safely?
-- Do database policies, grants, and service-role boundaries match the app's
-  tenancy model?
-- Are retries idempotent for writes, jobs, and webhook handlers?
+- migrationが前方向にクリーンに実行でき、rollbackまたは復旧計画があるか。
+- 破壊的なmigration、backfill、データ取り込みが安全に段階化されているか。
+- databaseのポリシー、grant、service-roleの境界がappのtenancyモデルと一致しているか。
+- 書き込み、job、webhookハンドラのretryが冪等か。
 
-### Payments And Webhooks
+### 決済とwebhook
 
-- Are webhook signatures verified before parsing trusted payload fields?
-- Is each payment, subscription, or fulfillment webhook idempotent?
-- Are replay, duplicate delivery, and out-of-order delivery handled?
-- Are test-mode and live-mode credentials separated?
+- 信頼するpayloadのフィールドをparseする前にwebhook署名を検証しているか。
+- 決済、subscription、fulfillmentの各webhookが冪等か。
+- replay、重複配信、順序逆転の配信を処理しているか。
+- test modeとlive modeのcredentialsが分離されているか。
 
-### Operations
+### 運用
 
-- Can the app start from a clean checkout using documented commands?
-- Are required environment variables named, validated, and fail-fast?
-- Is there a health check that proves dependencies are reachable?
-- Are deploy, rollback, and incident-owner paths documented?
-- Are logs useful without leaking secrets or personal data?
+- クリーンなcheckoutから、ドキュメント化されたコマンドでappを起動できるか。
+- 必要な環境変数が明示・検証され、不足時にfail-fastするか。
+- 依存先へ到達可能なことを示すhealth checkがあるか。
+- deploy、rollback、インシデント責任者の経路がドキュメント化されているか。
+- logが秘密情報や個人情報を漏らさずに有用か。
 
-### User Experience
+### ユーザー体験
 
-- Are the launch-critical paths covered on desktop and mobile?
-- Are forms usable on mobile without input zoom, layout overlap, or blocked
-  submission states?
-- Do loading, empty, error, and permission-denied states tell the user what
-  happened?
-- Is there a support or recovery path when a critical operation fails?
+- launchに不可欠な導線がdesktopとmobileの両方で確認済みか。
+- formがmobileで入力ズーム、レイアウト重なり、送信不能状態なしに使えるか。
+- loading、empty、error、権限拒否の状態が何が起きたかをユーザーに伝えるか。
+- 重要な操作が失敗したときのサポートまたは復旧経路があるか。
 
-## Scoring
+## スコアリング
 
-Use scores to force prioritization, not to imply mathematical certainty.
+スコアは優先順位付けを強制するために使い、数学的な確実性を示すものではない。
 
-| Band | Score | Meaning |
+| 帯 | スコア | 意味 |
 | --- | --- | --- |
-| Blocked | 0-49 | Do not ship until the top risks are fixed |
-| Risky | 50-69 | Ship only behind a small rollout or internal beta |
-| Launchable With Caveats | 70-84 | Ship if owners accept the listed risks |
-| Strong | 85-100 | No obvious launch blockers from available evidence |
+| Blocked | 0-49 | 上位リスクを直すまでリリースしない |
+| Risky | 50-69 | 小規模展開または社内betaに限ってリリースする |
+| Launchable With Caveats | 70-84 | 責任者が列挙されたリスクを受け入れるならリリースする |
+| Strong | 85-100 | 得られた根拠の範囲で明らかなlaunch blockerは無い |
 
-Cap the score at `69` if any of these are true:
+次のいずれかに該当する場合、スコアは`69`で頭打ちにする。
 
-- Authentication or authorization is missing on sensitive data.
-- Payment or fulfillment webhooks are not idempotent.
-- Required migrations cannot be run safely.
-- Secrets are exposed in client bundles, logs, or committed files.
-- There is no rollback path for a high-impact release.
+- 機微なデータに対する認証または認可が欠けている。
+- 決済またはfulfillmentのwebhookが冪等でない。
+- 必要なmigrationを安全に実行できない。
+- 秘密情報がclient bundle、log、commit済みファイルに露出している。
+- 影響の大きいreleaseにrollback経路が無い。
 
-Cap the score at `84` if CI is not green or the launch-critical path was not
-tested end to end.
+CIがgreenでない場合、またはlaunchに不可欠な導線がend to endでtestされていない場合、スコアは`84`で頭打ちにする。
 
-## Output Format
+## 出力形式
 
-Lead with one sentence:
+まず一文で示す。
 
 ```text
 Production audit: 76/100, launchable with caveats, with webhook idempotency and rollback docs as the two risks to fix before public launch.
 ```
 
-Then list:
+続いて次を列挙する。
 
-- `Blockers`: must-fix items before deploy.
-- `High-value fixes`: next fixes if the user wants to improve the score.
-- `Evidence checked`: files, commands, CI, deployed URL, or PRs inspected.
-- `Evidence missing`: what would change confidence if provided.
-- `Next action`: one concrete fix or verification step.
+- `Blockers`: deploy前に必ず直す項目。
+- `High-value fixes`: スコアを上げたい場合の次の修正。
+- `Evidence checked`: 確認したファイル、コマンド、CI、deploy済みURL、PR。
+- `Evidence missing`: 提供されれば確度が変わるもの。
+- `Next action`: 具体的な修正または検証ステップを一つ。
 
-Keep strengths short. The user asked for readiness, so the useful answer is the
-remaining risk and the next action.
+強みの記述は短くする。ユーザーが求めたのは準備状況なので、有用な答えは残存リスクと次の一手である。
 
-## Example
+## 例
 
-User:
+ユーザー:
 
 ```text
 is this ready to ship?
 ```
 
-Response:
+応答:
 
 ```text
 Production audit: 68/100, risky, because Stripe webhooks are verified but not idempotent and there is no rollback note for the pending migration.
@@ -189,16 +164,15 @@ Evidence checked:
 Next action: Want me to patch webhook idempotency first?
 ```
 
-## Anti-Patterns
+## アンチパターン
 
-- Running `npx <package>@latest` or a remote scanner as the default audit path.
-- Uploading source, secrets, customer data, or private topology to an external
-  audit service without explicit approval.
-- Producing a score without naming the evidence checked.
-- Treating green CI as production readiness.
-- Ending with a generic "let me know what you want to do."
+- 既定の監査手段として`npx <package>@latest`やリモートscannerを実行する。
+- 明示的な承認なしに、ソース、秘密情報、顧客データ、非公開の構成を外部の監査サービスへアップロードする。
+- 確認した根拠を示さずにスコアだけを出す。
+- CIがgreenであることを本番準備完了とみなす。
+- 「どうしたいか教えてください」という一般的な締め方で終える。
 
-## See Also
+## 関連
 
 - Skill: `security-review`
 - Skill: `deployment-patterns`

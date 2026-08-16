@@ -1,15 +1,15 @@
 ---
 name: e2e-testing
-description: Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies. Use when writing Playwright tests, structuring page objects, or fixing flaky E2E runs in CI.
+description: PlaywrightのE2E testパターン、Page Object Model、設定、CI/CD連携、artifact管理、flaky test対策。Playwrightのtestを書くとき、page objectを構成するとき、CIでflakyなE2E実行を直すときに使う。
 metadata:
   origin: ECC
 ---
 
-# E2E Testing Patterns
+# E2E testパターン
 
-Comprehensive Playwright patterns for building stable, fast, and maintainable E2E test suites.
+安定・高速・保守しやすいE2E test suiteを構築するためのPlaywrightパターン集。
 
-## Test File Organization
+## testファイルの構成
 
 ```
 tests/
@@ -65,7 +65,7 @@ export class ItemsPage {
 }
 ```
 
-## Test Structure
+## testの構造
 
 ```typescript
 import { test, expect } from '@playwright/test'
@@ -98,7 +98,7 @@ test.describe('Item Search', () => {
 })
 ```
 
-## Playwright Configuration
+## Playwrightの設定
 
 ```typescript
 import { defineConfig, devices } from '@playwright/test'
@@ -137,63 +137,63 @@ export default defineConfig({
 })
 ```
 
-## Flaky Test Patterns
+## flaky testのパターン
 
-### Quarantine
+### 隔離
 
 ```typescript
 test('flaky: complex search', async ({ page }) => {
   test.fixme(true, 'Flaky - Issue #123')
-  // test code...
+  // testコード...
 })
 
 test('conditional skip', async ({ page }) => {
   test.skip(process.env.CI, 'Flaky in CI - Issue #123')
-  // test code...
+  // testコード...
 })
 ```
 
-### Identify Flakiness
+### flakyさの特定
 
 ```bash
 npx playwright test tests/search.spec.ts --repeat-each=10
 npx playwright test tests/search.spec.ts --retries=3
 ```
 
-### Common Causes & Fixes
+### よくある原因と対処
 
-**Race conditions:**
+**race condition:**
 ```typescript
-// Bad: assumes element is ready
+// Bad: 要素が準備できている前提
 await page.click('[data-testid="button"]')
 
-// Good: auto-wait locator
+// Good: 自動待機するlocatorを使う
 await page.locator('[data-testid="button"]').click()
 ```
 
-**Network timing:**
+**networkのタイミング:**
 ```typescript
-// Bad: arbitrary timeout
+// Bad: 恣意的なtimeout
 await page.waitForTimeout(5000)
 
-// Good: wait for specific condition
+// Good: 特定の条件を待つ
 await page.waitForResponse(resp => resp.url().includes('/api/data'))
 ```
 
-**Animation timing:**
+**animationのタイミング:**
 ```typescript
-// Bad: click during animation
+// Bad: animation中にクリックする
 await page.click('[data-testid="menu-item"]')
 
-// Good: wait for stability
+// Good: 安定するまで待つ
 await page.locator('[data-testid="menu-item"]').waitFor({ state: 'visible' })
 await page.waitForLoadState('networkidle')
 await page.locator('[data-testid="menu-item"]').click()
 ```
 
-## Artifact Management
+## artifact管理
 
-### Screenshots
+### screenshot
 
 ```typescript
 await page.screenshot({ path: 'artifacts/after-login.png' })
@@ -201,7 +201,7 @@ await page.screenshot({ path: 'artifacts/full-page.png', fullPage: true })
 await page.locator('[data-testid="chart"]').screenshot({ path: 'artifacts/chart.png' })
 ```
 
-### Traces
+### trace
 
 ```typescript
 await browser.startTracing(page, {
@@ -209,21 +209,21 @@ await browser.startTracing(page, {
   screenshots: true,
   snapshots: true,
 })
-// ... test actions ...
+// ... testの操作 ...
 await browser.stopTracing()
 ```
 
-### Video
+### 動画
 
 ```typescript
-// In playwright.config.ts
+// playwright.config.ts内
 use: {
   video: 'retain-on-failure',
   videosPath: 'artifacts/videos/'
 }
 ```
 
-## CI/CD Integration
+## CI/CD連携
 
 ```yaml
 # .github/workflows/e2e.yml
@@ -251,38 +251,38 @@ jobs:
           retention-days: 30
 ```
 
-## Test Report Template
+## testレポートのテンプレート
 
 ```markdown
-# E2E Test Report
+# E2E testレポート
 
-**Date:** YYYY-MM-DD HH:MM
-**Duration:** Xm Ys
-**Status:** PASSING / FAILING
+**日時:** YYYY-MM-DD HH:MM
+**所要時間:** Xm Ys
+**状態:** PASSING / FAILING
 
-## Summary
-- Total: X | Passed: Y (Z%) | Failed: A | Flaky: B | Skipped: C
+## 概要
+- 合計: X | 成功: Y (Z%) | 失敗: A | flaky: B | skip: C
 
-## Failed Tests
+## 失敗したtest
 
 ### test-name
-**File:** `tests/e2e/feature.spec.ts:45`
-**Error:** Expected element to be visible
-**Screenshot:** artifacts/failed.png
-**Recommended Fix:** [description]
+**ファイル:** `tests/e2e/feature.spec.ts:45`
+**エラー:** Expected element to be visible
+**screenshot:** artifacts/failed.png
+**推奨する修正:** [説明]
 
-## Artifacts
-- HTML Report: playwright-report/index.html
-- Screenshots: artifacts/*.png
-- Videos: artifacts/videos/*.webm
-- Traces: artifacts/*.zip
+## artifact
+- HTMLレポート: playwright-report/index.html
+- screenshot: artifacts/*.png
+- 動画: artifacts/videos/*.webm
+- trace: artifacts/*.zip
 ```
 
-## Wallet / Web3 Testing
+## wallet / Web3のtest
 
 ```typescript
 test('wallet connection', async ({ page, context }) => {
-  // Mock wallet provider
+  // wallet providerをmockする
   await context.addInitScript(() => {
     window.ethereum = {
       isMetaMask: true,
@@ -300,22 +300,22 @@ test('wallet connection', async ({ page, context }) => {
 })
 ```
 
-## Financial / Critical Flow Testing
+## 金融系・重要フローのtest
 
 ```typescript
 test('trade execution', async ({ page }) => {
-  // Skip on production — real money
+  // 本番ではskipする（実際の資金が動くため）
   test.skip(process.env.NODE_ENV === 'production', 'Skip on production')
 
   await page.goto('/markets/test-market')
   await page.locator('[data-testid="position-yes"]').click()
   await page.locator('[data-testid="trade-amount"]').fill('1.0')
 
-  // Verify preview
+  // previewを検証する
   const preview = page.locator('[data-testid="trade-preview"]')
   await expect(preview).toContainText('1.0')
 
-  // Confirm and wait for blockchain
+  // 確定し、blockchainの応答を待つ
   await page.locator('[data-testid="confirm-trade"]').click()
   await page.waitForResponse(
     resp => resp.url().includes('/api/trade') && resp.status() === 200,

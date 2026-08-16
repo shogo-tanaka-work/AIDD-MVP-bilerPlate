@@ -1,48 +1,48 @@
 ---
 name: swift-protocol-di-testing
-description: Protocol-based dependency injection for testable Swift code — mock file system, network, and external APIs using focused protocols and Swift Testing. Use when Swift code needs testing and file system, network, or external APIs must be mocked.
+description: テスト可能なSwiftコードのためのprotocolベースdependency injection — 小さく責務を絞ったprotocolとSwift Testingでfile system、network、外部APIをmockする。Swiftコードのテストが必要で、file system・network・外部APIをmockする必要があるときに使う。
 metadata:
   origin: ECC
 ---
 
-# Swift Protocol-Based Dependency Injection for Testing
+# Swift のProtocolベースDependency Injectionによるテスト
 
-Patterns for making Swift code testable by abstracting external dependencies (file system, network, iCloud) behind small, focused protocols. Enables deterministic tests without I/O.
+外部依存（file system、network、iCloud）を小さく責務を絞ったprotocolの背後へ抽象化し、Swiftコードをテスト可能にするためのパターン。I/Oなしで決定的なテストを実現する。
 
-## When to Activate
+## 発動タイミング
 
-- Writing Swift code that accesses file system, network, or external APIs
-- Need to test error handling paths without triggering real failures
-- Building modules that work across environments (app, test, SwiftUI preview)
-- Designing testable architecture with Swift concurrency (actors, Sendable)
+- file system、network、外部APIへアクセスするSwiftコードを書くとき
+- 実際の障害を起こさずにエラー処理経路をテストしたいとき
+- 複数環境（アプリ、テスト、SwiftUI preview）で動くモジュールを構築するとき
+- Swift concurrency（actor、Sendable）でテスト可能なアーキテクチャを設計するとき
 
-## Core Pattern
+## 基本パターン
 
-### 1. Define Small, Focused Protocols
+### 1. 小さく責務を絞ったprotocolを定義する
 
-Each protocol handles exactly one external concern.
+各protocolは外部関心事をちょうど一つだけ扱う。
 
 ```swift
-// File system access
+// file systemへのアクセス
 public protocol FileSystemProviding: Sendable {
     func containerURL(for purpose: Purpose) -> URL?
 }
 
-// File read/write operations
+// ファイルの読み書き操作
 public protocol FileAccessorProviding: Sendable {
     func read(from url: URL) throws -> Data
     func write(_ data: Data, to url: URL) throws
     func fileExists(at url: URL) -> Bool
 }
 
-// Bookmark storage (e.g., for sandboxed apps)
+// bookmarkの保存（sandboxedアプリなど）
 public protocol BookmarkStorageProviding: Sendable {
     func saveBookmark(_ data: Data, for key: String) throws
     func loadBookmark(for key: String) throws -> Data?
 }
 ```
 
-### 2. Create Default (Production) Implementations
+### 2. デフォルト（本番用）実装を作る
 
 ```swift
 public struct DefaultFileSystemProvider: FileSystemProviding {
@@ -70,7 +70,7 @@ public struct DefaultFileAccessor: FileAccessorProviding {
 }
 ```
 
-### 3. Create Mock Implementations for Testing
+### 3. テスト用のmock実装を作る
 
 ```swift
 public final class MockFileAccessor: FileAccessorProviding, @unchecked Sendable {
@@ -99,9 +99,9 @@ public final class MockFileAccessor: FileAccessorProviding, @unchecked Sendable 
 }
 ```
 
-### 4. Inject Dependencies with Default Parameters
+### 4. デフォルト引数で依存をinjectする
 
-Production code uses defaults; tests inject mocks.
+本番コードはデフォルトを使い、テストはmockをinjectする。
 
 ```swift
 public actor SyncManager {
@@ -123,12 +123,12 @@ public actor SyncManager {
         let data = try fileAccessor.read(
             from: containerURL.appendingPathComponent("data.json")
         )
-        // Process data...
+        // データを処理する...
     }
 }
 ```
 
-### 5. Write Tests with Swift Testing
+### 5. Swift Testingでテストを書く
 
 ```swift
 import Testing
@@ -167,25 +167,25 @@ func testReadError() async {
 }
 ```
 
-## Best Practices
+## ベストプラクティス
 
-- **Single Responsibility**: Each protocol should handle one concern — don't create "god protocols" with many methods
-- **Sendable conformance**: Required when protocols are used across actor boundaries
-- **Default parameters**: Let production code use real implementations by default; only tests need to specify mocks
-- **Error simulation**: Design mocks with configurable error properties for testing failure paths
-- **Only mock boundaries**: Mock external dependencies (file system, network, APIs), not internal types
+- **単一責務**: 各protocolは関心事を一つだけ扱う — メソッドを詰め込んだ「神protocol」を作らない
+- **Sendable準拠**: protocolをactor境界を越えて使う場合に必要
+- **デフォルト引数**: 本番コードは既定で実装を使い、mockを指定するのはテストだけにする
+- **エラーのシミュレーション**: 失敗経路をテストできるよう、mockには設定可能なエラープロパティを持たせる
+- **境界だけをmockする**: 外部依存（file system、network、API）をmockし、内部の型はmockしない
 
-## Anti-Patterns to Avoid
+## 避けるべきアンチパターン
 
-- Creating a single large protocol that covers all external access
-- Mocking internal types that have no external dependencies
-- Using `#if DEBUG` conditionals instead of proper dependency injection
-- Forgetting `Sendable` conformance when used with actors
-- Over-engineering: if a type has no external dependencies, it doesn't need a protocol
+- すべての外部アクセスを網羅する巨大なprotocolを一つ作る
+- 外部依存を持たない内部型をmockする
+- 適切なdependency injectionの代わりに `#if DEBUG` 条件分岐を使う
+- actorと併用する際に `Sendable` 準拠を忘れる
+- 過剰設計: 外部依存を持たない型にprotocolは不要
 
-## When to Use
+## 利用場面
 
-- Any Swift code that touches file system, network, or external APIs
-- Testing error handling paths that are hard to trigger in real environments
-- Building modules that need to work in app, test, and SwiftUI preview contexts
-- Apps using Swift concurrency (actors, structured concurrency) that need testable architecture
+- file system、network、外部APIに触れるあらゆるSwiftコード
+- 実環境では起こしにくいエラー処理経路のテスト
+- アプリ、テスト、SwiftUI previewの各コンテキストで動く必要があるモジュールの構築
+- テスト可能なアーキテクチャが必要な、Swift concurrency（actor、structured concurrency）を使うアプリ

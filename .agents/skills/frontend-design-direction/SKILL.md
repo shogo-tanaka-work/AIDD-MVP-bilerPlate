@@ -1,93 +1,66 @@
 ---
 name: frontend-design-direction
-description: Set an ECC-specific frontend design direction for production UI work. Use when building or improving websites, dashboards, applications, components, landing pages, visual tools, or any web UI that needs stronger product-specific design judgment.
+description: 本番UI開発のためにECC固有のフロントエンドdesign directionを定める。Webサイト、dashboard、アプリケーション、component、landing page、visual tool、その他プロダクト固有のdesign判断が必要なweb UIを実装・改善するときに使う。
 metadata:
   origin: community
 ---
 
 # Frontend Design Direction
 
-Use this skill when the work is not just making UI function, but making it feel
-purposeful, polished, and appropriate to the product domain.
+UIを動かすだけでなく、目的に沿い、完成度が高く、プロダクト領域にふさわしい手触りにする作業でこのskillを使う。
 
-Source: salvaged from stale community PR #1659 by `linus707`.
+出典: 停滞したcommunity PR #1659（`linus707`）から救い出したもの。
 
-Note: ECC intentionally does not rebundle the canonical Anthropic
-`frontend-design` skill. Install that from `anthropics/skills` when you want the
-official upstream skill. This skill is the ECC-specific design-direction salvage
-of the useful local guidance from #1659.
+注記: ECCは正式なAnthropicの`frontend-design` skillを意図的に再同梱していない。公式のupstream skillが必要なら`anthropics/skills`から導入する。このskillは#1659の有用なローカル指針をECC固有のdesign directionとして取り出したものである。
 
-## When to Use
+## 使う場面
 
-- The user asks to build a web page, app, dashboard, artifact, component, or UI.
-- The user asks to make an interface more polished, distinctive, beautiful, or
-  less generic.
-- The implementation needs visual hierarchy, typography, color, motion, layout,
-  and interaction choices.
-- The current UI works but reads as flat, generic, templated, or mismatched to
-  the audience.
+- Webページ、アプリ、dashboard、artifact、component、UIの実装を依頼されたとき。
+- interfaceをより洗練させ、特徴的に、美しく、あるいは没個性でなくするよう依頼されたとき。
+- 実装に視覚的な階層、typography、色、motion、レイアウト、interactionの判断が必要なとき。
+- 現状のUIは動くが、平板・没個性・テンプレート的、または対象読者に合っていないとき。
 
 ## Design Direction
 
-Before coding, choose a specific direction:
+コーディング前に具体的な方向性を決める。
 
-1. Purpose: what job does the interface do?
-2. Audience: who repeats this workflow, and what do they need to scan first?
-3. Tone: utilitarian, editorial, playful, industrial, refined, technical,
-   maximal, minimal, dense, calm, or another explicit direction.
-4. Memorable detail: one design idea that makes the result feel intentional.
-5. Constraints: framework, accessibility, performance, responsiveness, and
-   existing design system.
+1. 目的: このinterfaceは何をする道具か。
+2. 対象者: このworkflowを繰り返すのは誰で、最初に何を見たいのか。
+3. トーン: 実用的、editorial、遊び心、無骨、洗練、技術的、過剰、最小限、高密度、静か、あるいは他の明示的な方向性。
+4. 記憶に残る要素: 結果を意図的に感じさせるdesignのアイデアを一つ。
+5. 制約: framework、accessibility、performance、レスポンシブ対応、既存のdesign system。
 
-Match the direction to the domain. A SaaS operations tool should usually be
-dense, quiet, and scannable. A portfolio, launch page, game, or editorial piece
-can be more expressive. Do not force a landing-page composition onto a tool that
-needs repeated daily use.
+方向性は領域に合わせる。SaaSの運用ツールは通常、高密度で静かで走査しやすくする。ポートフォリオ、ローンチページ、ゲーム、editorialな作品はより表現的でよい。日常的に繰り返し使うツールにlanding pageの構成を押し付けない。
 
-## Implementation Guidance
+## 実装の指針
 
-- Build the actual usable experience as the first screen unless the user
-  explicitly asks for marketing copy.
-- Use existing project components, tokens, icon libraries, and routing patterns
-  before introducing a new visual system.
-- Use real or generated visual assets when the interface depends on images,
-  products, places, people, gameplay, charts, or inspectable media.
-- Prefer contextual typography and spacing over generic oversized hero text.
-- Keep palettes multi-dimensional: avoid a UI dominated by one hue family.
-- Use CSS variables or existing design tokens so the direction remains
-  coherent across states.
-- Design responsive constraints explicitly: grids, aspect ratios, min/max
-  sizes, stable toolbars, and fixed-format controls should not shift when labels
-  or hover states appear.
-- Use motion sparingly but deliberately. Prefer high-signal transitions that
-  clarify state over decorative animation.
-- Verify text fit on mobile and desktop. Long labels must wrap or resize
-  cleanly rather than overflowing.
+- マーケティング文言を明示的に求められない限り、最初の画面として実際に使える体験を作る。
+- 新しい視覚体系を持ち込む前に、既存のproject component、token、iconライブラリ、routingパターンを使う。
+- interfaceが画像、製品、場所、人物、ゲームプレイ、chart、閲覧可能なメディアに依存する場合は、実物または生成した視覚assetを使う。
+- 汎用的な巨大hero textより、文脈に合ったtypographyとspacingを優先する。
+- パレットは多次元に保つ。単一の色相系統が支配するUIを避ける。
+- 方向性が各stateで一貫するよう、CSS変数か既存のdesign tokenを使う。
+- レスポンシブの制約を明示的に設計する。grid、アスペクト比、min/maxサイズ、安定したtoolbar、固定形式のcontrolは、labelやhover stateが現れてもずれてはならない。
+- motionは控えめに、しかし意図をもって使う。装飾的なアニメーションより、stateを明確にする情報量の多いtransitionを優先する。
+- モバイルとデスクトップで文字が収まることを確認する。長いlabelはあふれずに折り返すか縮小しなければならない。
 
-## Anti-Patterns
+## アンチパターン
 
-- Do not default to common generated patterns: purple gradients, decorative
-  blobs, oversized cards, vague hero copy, or stock-like atmospheric media.
-- Do not add UI cards inside other cards.
-- Do not use a single decorative style everywhere when the domain calls for
-  restraint.
-- Do not hide the primary product, tool, object, or workflow behind generic
-  marketing sections.
-- Do not add a new dependency for a design flourish unless it clearly pays for
-  itself.
-- Do not describe the UI's features inside the UI when the controls can speak
-  for themselves.
+- よくある生成物のパターンに流れない: 紫のグラデーション、装飾的なblob、過大なcard、曖昧なheroコピー、ストック風の雰囲気メディア。
+- cardの中にcardを入れない。
+- 領域が抑制を求めているのに、装飾的なstyleを一律に使わない。
+- 主要な製品・ツール・対象・workflowを汎用的なマーケティングセクションの背後に隠さない。
+- design上の装飾のために、明確に見合わない新規dependencyを追加しない。
+- controlがそれ自体で語れる場合に、UIの機能をUIの中で説明しない。
 
-## Review Checklist
+## レビューチェックリスト
 
-- The first viewport immediately communicates the product, workflow, or object.
-- The visual hierarchy supports scanning and repeated use.
-- Typography fits the container and does not overlap adjacent content.
-- Color choices have contrast and do not collapse into a one-note palette.
-- Icons are used for familiar tool actions where available.
-- Responsive layout has stable dimensions for boards, grids, toolbars,
-  controls, tiles, and counters.
-- Assets render and carry the subject matter instead of acting as filler.
-- Motion improves orientation and does not mask sluggishness.
-- The result matches the repo's existing frontend conventions unless there is a
-  clear reason to depart.
+- 最初のviewportで、製品・workflow・対象が即座に伝わる。
+- 視覚的な階層が走査と反復利用を支えている。
+- typographyがコンテナに収まり、隣接する内容と重ならない。
+- 色にコントラストがあり、単調なパレットへ潰れていない。
+- 既知のツール操作には、利用可能な範囲でiconを使っている。
+- レスポンシブなレイアウトで、board、grid、toolbar、control、tile、counterの寸法が安定している。
+- assetが表示され、埋め草ではなく主題を伝えている。
+- motionが方向感覚を助け、動作の遅さを覆い隠していない。
+- 明確な理由がない限り、結果がrepoの既存フロントエンド慣行に沿っている。

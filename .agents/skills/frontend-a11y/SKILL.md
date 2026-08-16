@@ -1,66 +1,66 @@
 ---
 name: frontend-a11y
 description: >
-  Accessibility patterns for React and Next.js — semantic HTML, ARIA attributes,
-  form labeling, keyboard navigation, focus management, and screen reader support.
-  Use when building any interactive UI component or form.
+  ReactとNext.jsのaccessibilityパターン — semantic HTML、ARIA属性、
+  formのlabel付け、keyboard navigation、focus管理、screen reader対応。
+  interactiveなUI componentやformを実装するときに使う。
 metadata:
   origin: community
 ---
 
-# Frontend Accessibility Patterns
+# フロントエンドaccessibilityパターン
 
-Practical accessibility patterns for React and Next.js. Covers the issues most commonly flagged in code review: missing form labels, incorrect ARIA usage, non-semantic interactive elements, and broken keyboard navigation.
+ReactとNext.jsの実践的なaccessibilityパターン。code reviewで最も多く指摘される問題を扱う。formのlabel欠落、誤ったARIAの使い方、semanticでないinteractive要素、壊れたkeyboard navigation。
 
-## When to Activate
+## 発動タイミング
 
-- Building or reviewing form components (`<input>`, `<select>`, `<textarea>`)
-- Creating interactive elements (modals, dropdowns, tooltips, tabs)
-- Using `<div>` or `<span>` with `onClick`
-- Adding `aria-*` attributes to any element
-- Implementing keyboard navigation or focus management
-- Receiving accessibility feedback from code review tools (CodeRabbit, ESLint a11y)
-- Building components that must support screen readers
+- form component（`<input>`、`<select>`、`<textarea>`）を実装・レビューする
+- interactiveな要素（modal、dropdown、tooltip、tab）を作る
+- `<div>`や`<span>`に`onClick`を付ける
+- 要素に`aria-*`属性を追加する
+- keyboard navigationやfocus管理を実装する
+- code reviewツール（CodeRabbit、ESLint a11y）からaccessibilityの指摘を受ける
+- screen reader対応が必要なcomponentを実装する
 
-## Form Accessibility
+## formのaccessibility
 
-Missing `htmlFor` / `id` pairing and disconnected error messages are the most common issues flagged in code review.
+`htmlFor` / `id`の対応漏れと、紐付いていないエラーメッセージがcode reviewで最も多い指摘。
 
-### Label Connection
+### labelの紐付け
 
 ```tsx
-// BAD: label has no connection to input — screen readers cannot associate them
+// BAD: labelがinputと紐付いておらず、screen readerが関連付けられない
 <label>Email</label>
 <input type="email" />
 
-// GOOD: htmlFor matches input id
+// GOOD: htmlForがinputのidと一致している
 <label htmlFor="email">Email</label>
 <input id="email" type="email" />
 ```
 
-### Required Fields
+### 必須フィールド
 
 ```tsx
-// BAD: visual-only asterisk conveys nothing to screen readers
+// BAD: 見た目だけのアスタリスクはscreen readerに何も伝わらない
 <label htmlFor="email">Email *</label>
 <input id="email" type="email" />
 
-// GOOD: required enables native browser validation; aria-required signals it to screen readers
+// GOOD: requiredでbrowser標準のvalidationが有効になり、aria-requiredでscreen readerに必須を伝える
 <label htmlFor="email">
   Email <span aria-hidden="true">*</span>
 </label>
 <input id="email" type="email" required aria-required="true" />
 ```
 
-### Error Messages
+### エラーメッセージ
 
 ```tsx
-// BAD: error text exists visually but is not linked to the input
+// BAD: エラー文言は表示されるがinputと紐付いていない
 <input id="email" type="email" />
 <span className="error">Invalid email address</span>
 
-// GOOD: aria-describedby connects input to its error message
-// aria-invalid signals the invalid state to screen readers
+// GOOD: aria-describedbyでinputとエラーメッセージを紐付ける
+// aria-invalidで不正な状態をscreen readerに伝える
 <input
   id="email"
   type="email"
@@ -74,7 +74,7 @@ Missing `htmlFor` / `id` pairing and disconnected error messages are the most co
 )}
 ```
 
-### Complete Accessible Form
+### accessibleなformの完成例
 
 ```tsx
 interface LoginFormProps {
@@ -148,59 +148,59 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
 }
 ```
 
-## Semantic HTML
+## semantic HTML
 
-Use the element that matches the intent. Screen readers and keyboard users depend on native semantics.
+意図に合う要素を使う。screen readerとkeyboard利用者はnativeのsemanticsに依存している。
 
 ```tsx
-// BAD: div has no role, no keyboard support, no accessible name
+// BAD: divにはroleもkeyboard対応もaccessible nameもない
 <div onClick={handleClick}>Submit</div>
 
-// GOOD: button is focusable, activates on Enter/Space, announces as "button"
+// GOOD: buttonはfocus可能でEnter/Spaceで発火し、「button」として読み上げられる
 <button type="button" onClick={handleClick}>Submit</button>
 ```
 
 ```tsx
-// BAD: non-semantic navigation
+// BAD: semanticでないnavigation
 <div onClick={() => navigate('/home')}>Home</div>
 
-// GOOD: anchor supports right-click, middle-click, and keyboard navigation
+// GOOD: anchorは右クリック・中クリック・keyboard navigationに対応する
 <a href="/home">Home</a>
 ```
 
 ```tsx
-// BAD: heading hierarchy skipped (h1 to h4)
+// BAD: 見出し階層が飛んでいる（h1からh4）
 <h1>Dashboard</h1>
 <h4>Recent Activity</h4>
 
-// GOOD: sequential heading levels
+// GOOD: 見出しレベルが連続している
 <h1>Dashboard</h1>
 <h2>Recent Activity</h2>
 ```
 
-## ARIA Attributes
+## ARIA属性
 
-Use ARIA only when native HTML semantics are insufficient. Wrong ARIA is worse than no ARIA.
+nativeなHTMLのsemanticsで足りない場合だけARIAを使う。誤ったARIAはARIAなしより悪い。
 
-### aria-label vs aria-labelledby
+### aria-labelとaria-labelledby
 
 ```tsx
-// aria-label: inline string label — use when no visible label text exists
+// aria-label: インラインの文字列label。可視のlabel文言がないときに使う
 <button aria-label="Close modal">
   <XIcon />
 </button>
 
-// aria-labelledby: references another element's text — use when a visible label exists
+// aria-labelledby: 他要素のテキストを参照する。可視のlabelがあるときに使う
 <section aria-labelledby="section-title">
   <h2 id="section-title">Recent Orders</h2>
-  {/* content */}
+  {/* コンテンツ */}
 </section>
 ```
 
 ### aria-describedby
 
 ```tsx
-// Provides supplementary description beyond the label
+// labelに加えて補足説明を提供する
 <button
   aria-describedby="delete-warning"
   onClick={handleDelete}
@@ -209,12 +209,12 @@ Use ARIA only when native HTML semantics are insufficient. Wrong ARIA is worse t
 <p id="delete-warning">This action cannot be undone.</p>
 ```
 
-### aria-live for Dynamic Content
+### 動的コンテンツのaria-live
 
 ```tsx
-// Use aria-live to announce content that updates without a page reload
-// polite: waits for user to finish current action before announcing
-// assertive: interrupts immediately — use only for urgent errors
+// ページ再読み込みなしに更新される内容を読み上げさせるにはaria-liveを使う
+// polite: 利用者が現在の操作を終えるまで待ってから読み上げる
+// assertive: 即座に割り込む。緊急のエラーにだけ使う
 
 export function StatusMessage({ message, isError }: { message: string; isError?: boolean }) {
   return (
@@ -225,7 +225,7 @@ export function StatusMessage({ message, isError }: { message: string; isError?:
 }
 ```
 
-### aria-expanded and aria-controls
+### aria-expandedとaria-controls
 
 ```tsx
 export function Accordion({ title, children }: { title: string; children: React.ReactNode }) {
@@ -245,11 +245,11 @@ export function Accordion({ title, children }: { title: string; children: React.
 }
 ```
 
-## Keyboard Navigation
+## keyboard navigation
 
-Every interactive element must be reachable and operable by keyboard alone.
+すべてのinteractive要素はkeyboardだけで到達・操作できなければならない。
 
-### Custom Dropdown
+### custom dropdown
 
 ```tsx
 export function Dropdown({ options, onSelect }: { options: string[]; onSelect: (value: string) => void }) {
@@ -314,13 +314,13 @@ export function Dropdown({ options, onSelect }: { options: string[]; onSelect: (
 }
 ```
 
-## Focus Management
+## focus管理
 
-Focus must move logically when UI state changes — especially for modals and route transitions.
+UIのstateが変わったときfocusは論理的に移動しなければならない。とくにmodalとroute遷移で重要。
 
-### Modal Focus Restoration
+### modalのfocus復元
 
-> This example covers initial focus and restoration. For a full focus trap (Tab/Shift+Tab cycling within the modal), use a library like [`focus-trap-react`](https://github.com/focus-trap/focus-trap-react) which handles edge cases like dynamic content and nested portals.
+> この例は初期focusと復元を扱う。完全なfocus trap（modal内でのTab/Shift+Tab循環）には、動的コンテンツやnested portalのedge caseを扱う[`focus-trap-react`](https://github.com/focus-trap/focus-trap-react)のようなライブラリを使う。
 
 ```tsx
 export function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -329,11 +329,11 @@ export function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; o
 
   useEffect(() => {
     if (isOpen) {
-      // Save currently focused element and move focus into modal
+      // 現在focusされている要素を保存し、modalへfocusを移す
       previousFocusRef.current = document.activeElement as HTMLElement;
       modalRef.current?.focus();
     } else {
-      // Restore focus to the element that opened the modal
+      // modalを開いた要素へfocusを戻す
       previousFocusRef.current?.focus();
     }
   }, [isOpen]);
@@ -350,27 +350,27 @@ export function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; o
 }
 ```
 
-## Images and Icons
+## 画像とアイコン
 
 ```tsx
-// BAD: decorative icon announced as unlabeled image
+// BAD: 装飾アイコンがlabelなしの画像として読み上げられる
 <img src="/icon.svg" />
 
-// GOOD: decorative image hidden from screen readers
+// GOOD: 装飾画像をscreen readerから隠す
 <img src="/decoration.png" alt="" aria-hidden="true" />
 
-// GOOD: meaningful image with descriptive alt text
+// GOOD: 意味のある画像には説明的なalt textを付ける
 <img src="/chart.png" alt="Monthly revenue increased 23% from January to March" />
 
-// GOOD: icon button with accessible label
+// GOOD: アイコンのみのbuttonにaccessibleなlabelを付ける
 <button aria-label="Delete item">
   <TrashIcon aria-hidden="true" />
 </button>
 ```
 
-## Reduced Motion
+## モーションの抑制
 
-Respect users who have requested reduced motion in their OS settings.
+OS設定でモーション抑制を要求している利用者を尊重する。
 
 ```tsx
 export function useReducedMotion(): boolean {
@@ -387,7 +387,7 @@ export function useReducedMotion(): boolean {
   return prefersReduced;
 }
 
-// Usage
+// 使用例
 export function AnimatedCard({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion();
 
@@ -403,44 +403,44 @@ export function AnimatedCard({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## Anti-Patterns
+## アンチパターン
 
 ```tsx
-// BAD: onClick on non-interactive element with no keyboard support
+// BAD: keyboard対応のないnon-interactive要素へのonClick
 <div onClick={handleClick}>Click me</div>
 
-// BAD: aria-label on a div that has no role
+// BAD: roleのないdivへのaria-label
 <div aria-label="Navigation">...</div>
 
-// BAD: placeholder used as a substitute for label
+// BAD: placeholderをlabelの代用にしている
 <input placeholder="Enter your email" />
 
-// BAD: positive tabIndex creates unpredictable tab order
+// BAD: 正のtabIndexはtab順序を予測不能にする
 <button tabIndex={3}>Submit</button>
 
-// BAD: aria-hidden on a focusable element — keyboard users get trapped
+// BAD: focus可能な要素へのaria-hidden。keyboard利用者が閉じ込められる
 <button aria-hidden="true">Open</button>
 
-// BAD: role="button" on div without keyboard handler
+// BAD: keyboard handlerのないdivへのrole="button"
 <div role="button" onClick={handleClick}>Submit</div>
-// Missing: tabIndex={0}, onKeyDown for Enter/Space
+// 不足: tabIndex={0}、Enter/Space用のonKeyDown
 ```
 
-## Checklist
+## チェックリスト
 
-Before submitting any interactive component for review:
+interactiveなcomponentをレビューへ出す前に確認する。
 
-- [ ] Every `<input>`, `<select>`, and `<textarea>` has a connected `<label>` via `htmlFor`/`id`
-- [ ] Error messages are linked with `aria-describedby` and marked `role="alert"`
-- [ ] No `onClick` on `<div>` or `<span>` without `role`, `tabIndex`, and `onKeyDown`
-- [ ] Icon-only buttons have `aria-label`
-- [ ] Decorative images use `alt=""` and `aria-hidden="true"`
-- [ ] Modals restore focus on close (for full focus trapping with Tab/Shift+Tab cycling, use a library like `focus-trap-react`)
-- [ ] Dynamic content updates use `aria-live`
-- [ ] `prefers-reduced-motion` is respected for animations
+- [ ] すべての`<input>`、`<select>`、`<textarea>`が`htmlFor`/`id`で`<label>`と紐付いている
+- [ ] エラーメッセージが`aria-describedby`で紐付き、`role="alert"`が付いている
+- [ ] `role`、`tabIndex`、`onKeyDown`なしの`<div>`・`<span>`への`onClick`がない
+- [ ] アイコンのみのbuttonに`aria-label`がある
+- [ ] 装飾画像が`alt=""`と`aria-hidden="true"`を使っている
+- [ ] modalが閉じるときにfocusを復元する（Tab/Shift+Tab循環を含む完全なfocus trapには`focus-trap-react`のようなライブラリを使う）
+- [ ] 動的なコンテンツ更新が`aria-live`を使っている
+- [ ] animationで`prefers-reduced-motion`を尊重している
 
-## Related Skills
+## 関連skill
 
-- `frontend-patterns` — general React component and state patterns
-- `design-system` — design token and component consistency
-- `motion-ui` — animation patterns with accessibility considerations
+- `frontend-patterns` — 一般的なReact componentとstateのパターン
+- `design-system` — design tokenとcomponentの一貫性
+- `motion-ui` — accessibilityを考慮したanimationパターン

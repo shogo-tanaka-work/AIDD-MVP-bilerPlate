@@ -1,124 +1,124 @@
 ---
 name: security-scan
-description: Scan your Claude Code configuration (.claude/ directory) for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks CLAUDE.md, settings.json, MCP servers, hooks, and agent definitions. Use when auditing a .claude/ directory — CLAUDE.md, settings.json, MCP servers, hooks, or agent definitions.
+description: AgentShieldを使い、Claude Codeの設定（.claude/ディレクトリ）の脆弱性・設定ミス・injectionリスクをscanする。CLAUDE.md、settings.json、MCP server、hook、agent定義を確認する。.claude/ディレクトリ（CLAUDE.md、settings.json、MCP server、hook、agent定義）を監査するときに使う。
 metadata:
   origin: ECC
 ---
 
-# Security Scan Skill
+# security scan skill
 
-Audit your Claude Code configuration for security issues using [AgentShield](https://github.com/affaan-m/agentshield).
+[AgentShield](https://github.com/affaan-m/agentshield)を使ってClaude Codeの設定のセキュリティ問題を監査する。
 
-## When to Activate
+## 発動タイミング
 
-- Setting up a new Claude Code project
-- After modifying `.claude/settings.json`, `CLAUDE.md`, or MCP configs
-- Before committing configuration changes
-- When onboarding to a new repository with existing Claude Code configs
-- Periodic security hygiene checks
+- Claude Codeのプロジェクトを新規に立ち上げる
+- `.claude/settings.json`、`CLAUDE.md`、MCP設定を変更した後
+- 設定変更をcommitする前
+- 既存のClaude Code設定があるリポジトリに参加したとき
+- 定期的なセキュリティ衛生チェック
 
-## What It Scans
+## scan対象
 
-| File | Checks |
+| ファイル | 確認内容 |
 |------|--------|
-| `CLAUDE.md` | Hardcoded secrets, auto-run instructions, prompt injection patterns |
-| `settings.json` | Overly permissive allow lists, missing deny lists, dangerous bypass flags |
-| `mcp.json` | Risky MCP servers, hardcoded env secrets, npx supply chain risks |
-| `hooks/` | Command injection via interpolation, data exfiltration, silent error suppression |
-| `agents/*.md` | Unrestricted tool access, prompt injection surface, missing model specs |
+| `CLAUDE.md` | ハードコードされた秘密値、自動実行の指示、prompt injectionパターン |
+| `settings.json` | 過度に緩いallow list、deny listの欠落、危険なbypass flag |
+| `mcp.json` | リスクのあるMCP server、ハードコードされたenvの秘密値、npxのsupply chainリスク |
+| `hooks/` | 展開によるcommand injection、データ持ち出し、エラーの黙殺 |
+| `agents/*.md` | 無制限のtoolアクセス、prompt injectionの攻撃面、model指定の欠落 |
 
-## Prerequisites
+## 前提条件
 
-AgentShield must be installed. Check and install if needed:
+AgentShieldがインストールされている必要がある。確認し、必要ならインストールする。
 
 ```bash
-# Check if installed
+# インストール済みか確認する
 npx ecc-agentshield --version
 
-# Install globally (recommended)
+# グローバルにインストールする（推奨）
 npm install -g ecc-agentshield
 
-# Or run directly via npx (no install needed)
+# もしくはnpxで直接実行する（インストール不要）
 npx ecc-agentshield scan .
 ```
 
-## Usage
+## 使い方
 
-### Basic Scan
+### 基本のscan
 
-Run against the current project's `.claude/` directory:
+現在のプロジェクトの`.claude/`ディレクトリに対して実行する。
 
 ```bash
-# Scan current project
+# 現在のプロジェクトをscanする
 npx ecc-agentshield scan
 
-# Scan a specific path
+# 特定のpathをscanする
 npx ecc-agentshield scan --path /path/to/.claude
 
-# Scan with minimum severity filter
+# 最小severityで絞り込んでscanする
 npx ecc-agentshield scan --min-severity medium
 ```
 
-### Output Formats
+### 出力形式
 
 ```bash
-# Terminal output (default) — colored report with grade
+# ターミナル出力（既定）— 評点付きのカラーレポート
 npx ecc-agentshield scan
 
-# JSON — for CI/CD integration
+# JSON — CI/CD連携向け
 npx ecc-agentshield scan --format json
 
-# Markdown — for documentation
+# Markdown — ドキュメント向け
 npx ecc-agentshield scan --format markdown
 
-# HTML — self-contained dark-theme report
+# HTML — 自己完結したdark themeレポート
 npx ecc-agentshield scan --format html > security-report.html
 ```
 
-### Auto-Fix
+### 自動修正
 
-Apply safe fixes automatically (only fixes marked as auto-fixable):
+安全な修正を自動適用する（auto-fixable と判定されたものだけ）。
 
 ```bash
 npx ecc-agentshield scan --fix
 ```
 
-This will:
-- Replace hardcoded secrets with environment variable references
-- Tighten wildcard permissions to scoped alternatives
-- Never modify manual-only suggestions
+このとき次を行う。
+- ハードコードされた秘密値を環境変数参照へ置き換える
+- wildcardのpermissionをscope付きの代替へ狭める
+- 手動対応のみの提案は変更しない
 
-### Opus 4.6 Deep Analysis
+### Opus 4.6による深掘り解析
 
-Run the adversarial three-agent pipeline for deeper analysis:
+敵対的な3エージェントpipelineを実行し、より深く解析する。
 
 ```bash
-# Requires ANTHROPIC_API_KEY
+# ANTHROPIC_API_KEYが必要
 export ANTHROPIC_API_KEY=your-key
 npx ecc-agentshield scan --opus --stream
 ```
 
-This runs:
-1. **Attacker (Red Team)** — finds attack vectors
-2. **Defender (Blue Team)** — recommends hardening
-3. **Auditor (Final Verdict)** — synthesizes both perspectives
+実行内容は次のとおり。
+1. **Attacker (Red Team)** — 攻撃経路を洗い出す
+2. **Defender (Blue Team)** — 堅牢化を提案する
+3. **Auditor (Final Verdict)** — 両者の視点を統合する
 
-### Initialize Secure Config
+### 安全な設定の初期化
 
-Scaffold a new secure `.claude/` configuration from scratch:
+安全な`.claude/`設定を一から生成する。
 
 ```bash
 npx ecc-agentshield init
 ```
 
-Creates:
-- `settings.json` with scoped permissions and deny list
-- `CLAUDE.md` with security best practices
-- `mcp.json` placeholder
+生成されるもの。
+- scope付きpermissionとdeny listを持つ`settings.json`
+- セキュリティのベストプラクティスを記載した`CLAUDE.md`
+- `mcp.json`のプレースホルダ
 
 ### GitHub Action
 
-Add to your CI pipeline:
+CI pipelineへ追加する。
 
 ```yaml
 - uses: affaan-m/agentshield@v1
@@ -128,39 +128,39 @@ Add to your CI pipeline:
     fail-on-findings: true
 ```
 
-## Severity Levels
+## severityの水準
 
-| Grade | Score | Meaning |
+| 評点 | スコア | 意味 |
 |-------|-------|---------|
-| A | 90-100 | Secure configuration |
-| B | 75-89 | Minor issues |
-| C | 60-74 | Needs attention |
-| D | 40-59 | Significant risks |
-| F | 0-39 | Critical vulnerabilities |
+| A | 90-100 | 安全な設定 |
+| B | 75-89 | 軽微な問題 |
+| C | 60-74 | 要注意 |
+| D | 40-59 | 重大なリスク |
+| F | 0-39 | 致命的な脆弱性 |
 
-## Interpreting Results
+## 結果の読み方
 
-### Critical Findings (fix immediately)
-- Hardcoded API keys or tokens in config files
-- `Bash(*)` in the allow list (unrestricted shell access)
-- Command injection in hooks via `${file}` interpolation
-- Shell-running MCP servers
+### Critical（ただちに修正する）
+- 設定ファイル内のハードコードされたAPI keyやtoken
+- allow listの`Bash(*)`（無制限のshellアクセス）
+- hook内の`${file}`展開によるcommand injection
+- shellを起動するMCP server
 
-### High Findings (fix before production)
-- Auto-run instructions in CLAUDE.md (prompt injection vector)
-- Missing deny lists in permissions
-- Agents with unnecessary Bash access
+### High（本番前に修正する）
+- CLAUDE.md内の自動実行の指示（prompt injectionの経路）
+- permissionにdeny listがない
+- 不要なBashアクセスを持つagent
 
-### Medium Findings (recommended)
-- Silent error suppression in hooks (`2>/dev/null`, `|| true`)
-- Missing PreToolUse security hooks
-- `npx -y` auto-install in MCP server configs
+### Medium（対応を推奨する）
+- hook内でのエラーの黙殺（`2>/dev/null`、`|| true`）
+- PreToolUseのセキュリティhookがない
+- MCP server設定での`npx -y`による自動インストール
 
-### Info Findings (awareness)
-- Missing descriptions on MCP servers
-- Prohibitive instructions correctly flagged as good practice
+### Info（把握しておく）
+- MCP serverのdescriptionがない
+- 禁止事項の指示が良い実践として正しく検出されている
 
-## Links
+## リンク
 
 - **GitHub**: [github.com/affaan-m/agentshield](https://github.com/affaan-m/agentshield)
 - **npm**: [npmjs.com/package/ecc-agentshield](https://www.npmjs.com/package/ecc-agentshield)

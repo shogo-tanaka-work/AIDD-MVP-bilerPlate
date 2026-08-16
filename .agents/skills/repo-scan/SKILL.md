@@ -1,25 +1,25 @@
 ---
 name: repo-scan
-description: Bootstrap pointer that installs the external repo-scan skill from a pinned, reviewable commit. Use when repo-scan must be installed before running its cross-stack source-code asset audit; this ECC pointer does not perform the audit itself.
+description: 外部のrepo-scan skillを、pinされたレビュー可能なcommitから導入するbootstrapポインタ。cross-stackなソースコード資産監査を実行する前にrepo-scanを導入する必要があるときに使う。このECCポインタ自体は監査を行わない。
 metadata:
   origin: community
 ---
 
 # repo-scan
 
-> Every ecosystem has its own dependency manager, but no tool looks across C++, Android, iOS, and Web to tell you: how much code is actually yours, what's third-party, and what's dead weight.
+> どのエコシステムにも固有の依存管理ツールはあるが、C++・Android・iOS・Webを横断して「どれが自分たちのコードで、どれがサードパーティで、どれが不要な重荷か」を教えてくれるツールはない。
 
-## When to Use
+## 使いどころ
 
-- Taking over a large legacy codebase and need a structural overview
-- Before major refactoring — identify what's core, what's duplicate, what's dead
-- Auditing third-party dependencies embedded directly in source (not declared in package managers)
-- Preparing architecture decision records for monorepo reorganization
+- 大規模なレガシーコードベースを引き継ぎ、構造の全体像が必要なとき
+- 大きなrefactorの前 — 中核・重複・デッドコードを識別する
+- package managerに宣言されず、ソースへ直接埋め込まれたサードパーティ依存を監査するとき
+- monorepo再編のためのarchitecture decision recordを準備するとき
 
-## Installation
+## インストール
 
 ```bash
-# Clone first so the pinned commit can be reviewed before installation
+# インストール前にpinされたcommitをレビューできるよう、先にcloneする
 set -euo pipefail
 
 REPO_SCAN_COMMIT=2742664ebcad1450c208eda0ae45d3c17fad5dd8
@@ -84,7 +84,7 @@ mkdir -p "$REPO_SCAN_STAGE"
 git -C "$REPO_SCAN_TMP/source" archive "$REPO_SCAN_COMMIT" | \
   tar -xf - -C "$REPO_SCAN_STAGE"
 
-# Review "$REPO_SCAN_TMP/source" before approving installation.
+# インストールを承認する前に "$REPO_SCAN_TMP/source" をレビューする。
 printf 'Type install to replace %s after reviewing the pinned source: ' \
   "$REPO_SCAN_INSTALL_DIR" >&2
 read -r REPO_SCAN_CONFIRM
@@ -118,53 +118,53 @@ if ! move_repo_scan_dir "$REPO_SCAN_STAGE" "$REPO_SCAN_INSTALL_DIR"; then
 fi
 ```
 
-> Review the source before installing any agent skill.
+> agent skillを導入する前に、必ずソースをレビューする。
 
-Installation completes only the bootstrap. Reload your agent harness, then invoke `repo-scan` again. This ECC pointer installs the external skill but does not run a scan itself.
+インストールで完了するのはbootstrapだけ。agent harnessを再読み込みしてから、あらためて`repo-scan`を呼び出す。このECCポインタは外部skillを導入するだけで、スキャン自体は行わない。
 
-## Core Capabilities
+## 中核機能
 
-| Capability | Description |
+| 機能 | 説明 |
 |---|---|
-| **Cross-stack scanning** | C/C++, Java/Android, iOS (OC/Swift), Web (TS/JS/Vue) in one pass |
-| **File classification** | Every file tagged as project code, third-party, or build artifact |
-| **Library detection** | 50+ known libraries (FFmpeg, Boost, OpenSSL…) with version extraction |
-| **Four-level verdicts** | Core Asset / Extract & Merge / Rebuild / Deprecate |
-| **HTML reports** | Interactive dark-theme pages with drill-down navigation |
-| **Monorepo support** | Hierarchical scanning with summary + sub-project reports |
+| **Cross-stackスキャン** | C/C++、Java/Android、iOS（OC/Swift）、Web（TS/JS/Vue）を1パスで処理 |
+| **ファイル分類** | 全ファイルをproject code、third-party、build artifactのいずれかへタグ付け |
+| **ライブラリ検出** | 既知の50以上のライブラリ（FFmpeg、Boost、OpenSSL…）をversion抽出付きで検出 |
+| **4段階の判定** | Core Asset / Extract & Merge / Rebuild / Deprecate |
+| **HTMLレポート** | ドリルダウン可能なインタラクティブなdark themeページ |
+| **Monorepo対応** | 階層的スキャンによるサマリー＋サブプロジェクトレポート |
 
-## Analysis Depth Levels
+## 分析の深さレベル
 
-| Level | Files Read | Use Case |
+| レベル | 読むファイル数 | 用途 |
 |---|---|---|
-| `fast` | 1-2 per module | Quick inventory of huge directories |
-| `standard` | 2-5 per module | Default audit with full dependency + architecture checks |
-| `deep` | 5-10 per module | Adds thread safety, memory management, API consistency |
-| `full` | All files | Pre-merge comprehensive review |
+| `fast` | module当たり1-2 | 巨大ディレクトリの素早いインベントリ |
+| `standard` | module当たり2-5 | 依存とアーキテクチャを一通り確認する既定の監査 |
+| `deep` | module当たり5-10 | thread safety、メモリ管理、API一貫性を追加 |
+| `full` | 全ファイル | merge前の網羅的レビュー |
 
-## How It Works
+## 動作の流れ
 
-1. **Classify the repo surface**: enumerate files, then tag each as project code, embedded third-party code, or build artifact.
-2. **Detect embedded libraries**: inspect directory names, headers, license files, and version markers to identify bundled dependencies and likely versions.
-3. **Score each module**: group files by module or subsystem, then assign one of the four verdicts based on ownership, duplication, and maintenance cost.
-4. **Highlight structural risks**: call out dead-weight artifacts, duplicated wrappers, outdated vendored code, and modules that should be extracted, rebuilt, or deprecated.
-5. **Produce the report**: return a concise summary plus the interactive HTML output with per-module drill-down so the audit can be reviewed asynchronously.
+1. **repoの表層を分類する**: ファイルを列挙し、それぞれをproject code、埋め込みthird-party code、build artifactへタグ付けする。
+2. **埋め込みライブラリを検出する**: ディレクトリ名、header、licenseファイル、versionマーカーを調べ、同梱された依存と推定versionを特定する。
+3. **moduleごとに評価する**: moduleやサブシステム単位でファイルをまとめ、所有状況・重複・保守コストから4段階の判定のいずれかを付ける。
+4. **構造上のリスクを示す**: 不要なartifact、重複したwrapper、古いvendoredコード、抽出・再構築・廃止すべきmoduleを指摘する。
+5. **レポートを出力する**: 簡潔なサマリーと、module単位でドリルダウンできるインタラクティブなHTML出力を返し、監査を非同期にレビューできるようにする。
 
-## Examples
+## 実例
 
-On a 50,000-file C++ monorepo:
-- Found FFmpeg 2.x (2015 vintage) still in production
-- Discovered the same SDK wrapper duplicated 3 times
-- Identified 636 MB of committed Debug/ipch/obj build artifacts
-- Classified: 3 MB project code vs 596 MB third-party
+5万ファイルのC++ monorepoでの結果:
+- 2015年頃のFFmpeg 2.xが本番でまだ使われていた
+- 同一SDK wrapperが3回重複していた
+- commitされたDebug/ipch/objのbuild artifactが636 MBあった
+- 分類結果: project code 3 MB に対し third-party 596 MB
 
-## Best Practices
+## ベストプラクティス
 
-- Start with `standard` depth for first-time audits
-- Use `fast` for monorepos with 100+ modules to get a quick inventory
-- Run `deep` incrementally on modules flagged for refactoring
-- Review the cross-module analysis for duplicate detection across sub-projects
+- 初回の監査は`standard`の深さから始める
+- module数が100を超えるmonorepoでは`fast`で素早くインベントリを取る
+- refactor候補として挙がったmoduleに対して`deep`を段階的に実行する
+- サブプロジェクト横断の重複検出のため、module横断分析を確認する
 
-## Links
+## リンク
 
 - [GitHub Repository](https://github.com/haibindev/repo-scan)

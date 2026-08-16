@@ -1,75 +1,75 @@
 ---
 name: google-workspace-ops
-description: Operate across Google Drive, Docs, Sheets, and Slides as one workflow surface for plans, trackers, decks, and shared documents. Use when the user needs to find, summarize, edit, migrate, or clean up Google Workspace assets without dropping to raw tool calls.
+description: Google Drive・Docs・Sheets・Slidesを、計画・トラッカー・deck・共有ドキュメントのための一つのworkflow surfaceとして横断的に操作する。raw tool callへ落とさずにGoogle Workspaceのassetを検索・要約・編集・移行・整理したいときに使う。
 metadata:
   origin: ECC
 ---
 
 # Google Workspace Ops
 
-This skill is for operating shared docs, spreadsheets, and decks as working systems, not just editing one file in isolation.
+このskillは、共有ドキュメント・スプレッドシート・deckを、単一ファイルの編集ではなく動いているシステムとして操作するためのもの。
 
-## When to Use
+## いつ使うか
 
-- User needs to find a doc, sheet, or deck and update it in place
-- Consolidating plans, trackers, notes, or customer lists stored in Google Drive
-- Cleaning or restructuring a shared spreadsheet
-- Importing, repairing, or reformatting a Google Slides deck
-- Producing summaries from Docs, Sheets, or Slides for decision-making
+- ドキュメント・シート・deckを見つけて、その場で更新する必要があるとき
+- Google Driveにある計画・トラッカー・メモ・顧客リストを統合するとき
+- 共有スプレッドシートを整理・再構成するとき
+- Google Slidesのdeckをimport・修復・再フォーマットするとき
+- 意思決定のためにDocs・Sheets・Slidesから要約を作るとき
 
-## Preferred Tool Surface
+## 優先するtool surface
 
-Use Google Drive as the entry point, then switch to the right specialist:
+Google Driveを入口にし、そこから適切な専用toolへ切り替える。
 
-- Google Docs for text-heavy docs
-- Google Sheets for tabular work, formulas, and charts
-- Google Slides for decks, imports, template migration, and cleanup
+- テキスト中心のドキュメントはGoogle Docs
+- 表・数式・チャートの作業はGoogle Sheets
+- deck、import、テンプレート移行、整理はGoogle Slides
 
-Do not guess structure from filenames alone. Inspect first.
+ファイル名だけから構造を推測しない。先に中身を確認する。
 
 ## Workflow
 
-### 1. Find the asset
+### 1. assetを見つける
 
-Start with the Drive search surface to locate:
+Driveの検索surfaceから始めて、次を特定する。
 
-- the exact file
-- sibling assets
-- likely duplicates
-- recently modified versions
+- 目的のファイルそのもの
+- 関連するasset
+- 重複の可能性があるもの
+- 直近で更新されたバージョン
 
-If several documents look similar, confirm by title, owner, modified time, or folder.
+似たドキュメントが複数あるときは、タイトル・所有者・更新時刻・フォルダで確定する。
 
-### 2. Inspect before editing
+### 2. 編集前に確認する
 
-Before making changes:
+変更前に次を行う。
 
-- summarize current structure
-- identify tabs, headings, or slide count
-- detect whether the task is local cleanup or structural surgery
+- 現在の構造を要約する
+- タブ・見出し・スライド数を把握する
+- 局所的な整理なのか構造的な手術なのかを判別する
 
-Pick the smallest tool that can safely perform the work.
+作業を安全に実行できる最小のtoolを選ぶ。
 
-### 3. Edit with precision
+### 3. 正確に編集する
 
-- For Docs: use index-aware edits, not vague rewrites
-- For Sheets: operate on explicit tabs and ranges
-- For Slides: distinguish content edits from visual cleanup or template migration
+- Docs: 曖昧な書き直しではなく、indexを意識した編集を行う
+- Sheets: 明示したタブとrangeに対して操作する
+- Slides: 内容の編集と、見た目の整理・テンプレート移行を区別する
 
-If the requested work is visual or layout-sensitive, iterate with inspection and verification instead of one giant blind update.
+依頼が視覚やレイアウトに影響するものなら、巨大な一括更新ではなく、確認と検証を挟んで反復する。
 
-### 4. Keep the working system clean
+### 4. 動いているシステムを清潔に保つ
 
-When the file is part of a larger workflow, also surface:
+ファイルが大きなworkflowの一部であるときは、次も併せて示す。
 
-- duplicate trackers
-- outdated decks
-- stale docs vs canonical docs
-- whether the asset should be archived, merged, or renamed
+- 重複したトラッカー
+- 古くなったdeck
+- 陳腐化したドキュメントと正本ドキュメントの違い
+- そのassetをarchive・統合・改名すべきかどうか
 
-## Output Format
+## 出力形式
 
-Use:
+次を使う。
 
 ```text
 ASSET
@@ -88,9 +88,9 @@ FOLLOW-UPS
 - archive / merge / duplicate cleanup / next file to update
 ```
 
-## Good Use Cases
+## 適したユースケース
 
-- "Find the active planning doc and condense it"
-- "Clean up this customer spreadsheet and show me the churn-risk rows"
-- "Import this deck into Slides and make it presentable"
-- "Find the current tracker, not the stale duplicate"
+- 「現行の計画ドキュメントを見つけて要約して」
+- 「この顧客スプレッドシートを整理して、解約リスクの行を見せて」
+- 「このdeckをSlidesへimportして、見せられる状態にして」
+- 「古い重複ではなく、現行のトラッカーを見つけて」

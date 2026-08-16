@@ -1,51 +1,51 @@
 ---
 name: prisma-patterns
-description: Prisma ORM patterns for TypeScript backends — schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrate dev resetting the DB, @updatedAt skipped on bulk writes, and serverless connection exhaustion. Use when writing a Prisma schema or query, or debugging transactions, migrations, or serverless connection limits.
+description: TypeScript backend向けのPrisma ORMパターン — schema設計、query最適化、transaction、pagination、そしてupdateManyがrecordではなくcountを返す、$transactionのtimeout、migrate devがDBをresetする、bulk書き込みで@updatedAtが更新されない、serverlessでのconnection枯渇といった重大な落とし穴。Prismaのschemaやqueryを書くとき、transaction・migration・serverlessのconnection上限をdebugするときに使う。
 metadata:
   origin: ECC
 ---
 
-# Prisma Patterns
+# Prismaパターン
 
-Production patterns and non-obvious traps for Prisma ORM in TypeScript backends.
+TypeScript backendにおけるPrisma ORMの本番パターンと、気づきにくい落とし穴。
 
-> **Check your version before applying patterns.** The Prisma API surface has evolved across major releases:
+> **パターンを適用する前にversionを確認する。** PrismaのAPI表面はメジャーリリースごとに変化してきた。
 >
 > ```bash
 > npx prisma --version
 > ```
 >
-> Notable API differences across versions:
-> - `relationJoins` can load relations via JOIN rather than separate queries, but may cause row explosion on large 1:N relations or deep `include` — benchmark both approaches
-> - `omit` field modifier and `prisma.$extends` Client Extensions API were added
-> - **Newer installs**: the package may be named `prisma` instead of `@prisma/client`; `PrismaClient` may require a driver adapter (e.g. `@prisma/adapter-pg`); `datasource.url` may live in `prisma.config.ts` instead of `schema.prisma`
-> - CLI commands (`migrate dev`, `migrate deploy`, `generate`) are unchanged across versions
+> version間の主なAPIの違い:
+> - `relationJoins`はrelationを別queryではなくJOINで読み込めるが、大きな1:N relationや深い`include`では行数が爆発することがある — 両方をbenchmarkする
+> - `omit`フィールド修飾子と`prisma.$extends`のClient Extensions APIが追加された
+> - **新しめのinstall**: packageが`@prisma/client`ではなく`prisma`という名前のことがある。`PrismaClient`がdriver adapter（例: `@prisma/adapter-pg`）を要求することがある。`datasource.url`が`schema.prisma`ではなく`prisma.config.ts`にあることがある
+> - CLIコマンド（`migrate dev`、`migrate deploy`、`generate`）はversion間で変わらない
 
-## When to Activate
+## 発動タイミング
 
-- Designing or modifying Prisma schema models and relations
-- Writing queries, transactions, or pagination logic
-- Using `updateMany`, `deleteMany`, or any bulk operation
-- Running or planning database migrations
-- Deploying to serverless environments (Vercel, Lambda, Cloudflare Workers)
-- Implementing soft delete or multi-tenant row filtering
+- Prisma schemaのmodelやrelationを設計・変更するとき
+- query、transaction、paginationのロジックを書くとき
+- `updateMany`、`deleteMany`、その他のbulk操作を使うとき
+- database migrationを実行・計画するとき
+- serverless環境（Vercel、Lambda、Cloudflare Workers）へdeployするとき
+- soft deleteやmulti-tenantの行フィルタリングを実装するとき
 
-## Core Concepts
+## 中心となる概念
 
-### ID Strategy
+### ID戦略
 
-| Strategy | Use When | Avoid When |
+| 戦略 | 使う場面 | 避ける場面 |
 |---|---|---|
-| `@default(cuid())` | Default choice — URL-safe, sortable, no collisions | Sequential IDs needed for external systems |
-| `@default(uuid())` | Interoperability with non-Prisma systems required | High-write tables (random UUIDs fragment B-tree indexes) |
-| `@default(autoincrement())` | Internal join tables, audit logs | Public-facing IDs (exposes record count) |
+| `@default(cuid())` | 既定の選択 — URL-safe、sortable、衝突しない | 外部システム向けに連番IDが必要な場合 |
+| `@default(uuid())` | Prisma以外のシステムとの相互運用が必要な場合 | 書き込みの多いテーブル（ランダムUUIDはB-tree indexを断片化する） |
+| `@default(autoincrement())` | 内部のjoinテーブル、監査ログ | 外部公開するID（レコード数が露出する） |
 
-### Schema Defaults
+### Schemaの既定
 
 ```prisma
 model User {
   id        String    @id @default(cuid())
-  email     String    @unique  // @unique already creates an index — no @@index needed
+  email     String    @unique  // @uniqueは既にindexを作る — @@indexは不要
   name      String
   role      Role      @default(USER)
   posts     Post[]
@@ -54,64 +54,64 @@ model User {
   deletedAt DateTime?
 
   @@index([createdAt])
-  @@index([deletedAt, createdAt]) // composite for soft-delete + sort queries
+  @@index([deletedAt, createdAt]) // soft-delete + sort queryのための複合index
 }
 ```
 
-- Add `@@index` on every foreign key and column used in `WHERE` or `ORDER BY`.
-- Declare `deletedAt DateTime?` upfront when soft delete is a foreseeable requirement — adding it later requires a migration on a live table.
-- `updatedAt @updatedAt` is set automatically by Prisma on `update` and `upsert` only (see Anti-Patterns for bulk update trap).
+- すべての外部キーと、`WHERE`や`ORDER BY`で使う列に`@@index`を付ける。
+- soft deleteが見込まれる要件なら`deletedAt DateTime?`を最初から宣言する — 後から追加すると稼働中テーブルへのmigrationが必要になる。
+- `updatedAt @updatedAt`はPrismaが`update`と`upsert`のときだけ自動設定する（bulk updateの落とし穴はアンチパターンを参照）。
 
-### `include` vs `select`
+### `include` と `select`
 
 | | `include` | `select` |
 |---|---|---|
-| Returns | All scalar fields + specified relations | Only specified fields |
-| Use when | You need most fields plus a relation | Hot paths, large tables, avoiding over-fetch |
-| Performance | May over-fetch on wide tables | Minimal payload, faster on large datasets |
-| Prisma 5 note | Uses JOIN by default (`relationJoins`) | Same |
+| 返すもの | 全scalarフィールド＋指定したrelation | 指定したフィールドのみ |
+| 使う場面 | ほとんどのフィールドとrelationが必要なとき | hot path、大きなテーブル、over-fetchの回避 |
+| 性能 | 横に広いテーブルでover-fetchしうる | payloadが最小、大規模データで高速 |
+| Prisma 5の注記 | 既定でJOINを使う（`relationJoins`） | 同じ |
 
 ```ts
-// include — all columns + relation
+// include — 全列 + relation
 const user = await prisma.user.findUnique({
   where: { id },
   include: { posts: { select: { id: true, title: true } } },
 });
 
-// select — explicit allowlist
+// select — 明示的な許可リスト
 const user = await prisma.user.findUnique({
   where: { id },
   select: { id: true, email: true, name: true },
 });
 ```
 
-Never return raw Prisma entities from API responses — map to response DTOs to control exposed fields:
+生のPrisma entityをAPI responseで返さない。露出するフィールドを制御するためresponse DTOへmapする。
 
 ```ts
-// BAD: leaks passwordHash, deletedAt, internal fields
+// BAD: passwordHash、deletedAt、内部フィールドが漏れる
 return await prisma.user.findUniqueOrThrow({ where: { id } });
 
-// GOOD: explicit DTO mapping
+// GOOD: 明示的なDTOマッピング
 const user = await prisma.user.findUniqueOrThrow({ where: { id } });
 return { id: user.id, name: user.name, email: user.email };
 ```
 
-### Transaction Form Selection
+### Transaction形式の選択
 
-| Situation | Use |
+| 状況 | 使うもの |
 |---|---|
-| Independent operations, no inter-dependency | Array form |
-| Later step depends on earlier result | Interactive form |
-| External calls (email, HTTP) involved | Outside transaction entirely |
+| 互いに依存しない独立した操作 | 配列形式 |
+| 後の処理が前の結果に依存する | interactive形式 |
+| 外部呼び出し（メール、HTTP）を含む | transactionの外へ出す |
 
 ```ts
-// Array form — batched in one round trip
+// 配列形式 — 1往復でまとめて実行される
 const [user, post] = await prisma.$transaction([
   prisma.user.update({ where: { id }, data: { name } }),
   prisma.post.create({ data: { title, authorId: id } }),
 ]);
 
-// Interactive form — use tx client only, never the outer prisma client
+// interactive形式 — txクライアントだけを使い、外側のprismaクライアントは使わない
 const post = await prisma.$transaction(async (tx) => {
   const user = await tx.user.findUniqueOrThrow({ where: { id } });
   if (user.role !== 'ADMIN') throw new Error('Forbidden');
@@ -119,15 +119,15 @@ const post = await prisma.$transaction(async (tx) => {
 });
 ```
 
-### PrismaClient Singleton
+### PrismaClientのsingleton
 
-Each `PrismaClient` instance opens its own connection pool. Instantiate once.
+`PrismaClient`のインスタンスはそれぞれ独自のconnection poolを開く。生成は一度だけにする。
 
 ```ts
 // lib/prisma.ts
 
-// Option A — adapter-based initialization (required by newer Prisma installs)
-import { PrismaClient } from '@prisma/client'; // or the generated client path for your setup
+// 選択肢A — adapterベースの初期化（新しめのPrisma installで必要）
+import { PrismaClient } from '@prisma/client'; // または環境に応じた生成clientのpath
 import { PrismaPg } from '@prisma/adapter-pg';
 
 function createPrismaClient() {
@@ -146,36 +146,36 @@ export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Option B — direct initialization (older installs, no adapter needed)
+// 選択肢B — 直接初期化（古いinstall、adapter不要）
 // import { PrismaClient } from '@prisma/client';
 // export const prisma = globalForPrisma.prisma ?? new PrismaClient({ ... });
 ```
 
-Use Option A if your Prisma install requires an `adapter` argument in the `PrismaClient` constructor.
-Use Option B if `new PrismaClient()` works without arguments. Let the compiler tell you which is correct.
+Prismaのinstallが`PrismaClient`のコンストラクタに`adapter`引数を要求するなら選択肢Aを使う。
+`new PrismaClient()`が引数なしで動くなら選択肢Bを使う。どちらが正しいかはコンパイラに判断させる。
 
-The `globalThis` pattern prevents duplicate instances during hot reload (Next.js, nodemon, ts-node-dev).
+`globalThis`パターンはhot reload（Next.js、nodemon、ts-node-dev）中の重複インスタンス生成を防ぐ。
 
-### N+1 Problem
+### N+1問題
 
-Loading relations inside a loop issues one query per row.
+loopの中でrelationを読み込むと、行ごとに1 queryが発行される。
 
 ```ts
-// BAD: N+1 — one extra query per user
+// BAD: N+1 — userごとに追加のqueryが1本ずつ走る
 const users = await prisma.user.findMany();
 for (const user of users) {
   const posts = await prisma.post.findMany({ where: { authorId: user.id } });
 }
 
-// GOOD: single query
+// GOOD: 単一query
 const users = await prisma.user.findMany({ include: { posts: true } });
 ```
 
-With Prisma 5+ `relationJoins`, the `include` form uses a single JOIN. On large 1:N sets this may increase result set size — benchmark both approaches if the relation can return many rows per parent.
+Prisma 5以降の`relationJoins`では、`include`形式は単一のJOINを使う。大きな1:Nでは結果セットが膨らむことがある — 親1件あたり多数の行を返しうるrelationなら両方をbenchmarkする。
 
-## Code Examples
+## コード例
 
-### Cursor Pagination (preferred for feeds and large datasets)
+### Cursor pagination（フィードや大規模データに推奨）
 
 ```ts
 async function getPosts(cursor?: string, limit = 20) {
@@ -183,7 +183,7 @@ async function getPosts(cursor?: string, limit = 20) {
     where: { published: true },
     orderBy: [
       { createdAt: 'desc' },
-      { id: 'desc' }, // secondary sort prevents unstable pagination on duplicate timestamps
+      { id: 'desc' }, // 第2ソートキーがtimestamp重複時の不安定なpaginationを防ぐ
     ],
     take: limit + 1,
     ...(cursor && { cursor: { id: cursor }, skip: 1 }),
@@ -196,22 +196,22 @@ async function getPosts(cursor?: string, limit = 20) {
 }
 ```
 
-Fetch `limit + 1` and pop — canonical way to detect `hasNextPage` without an extra count query. Always include a unique field (e.g. `id`) as a secondary `orderBy` to prevent unstable pagination when multiple rows share the same timestamp. Use offset pagination only when users need to jump to arbitrary pages (admin tables).
+`limit + 1`件を取得してpopするのが、追加のcount queryなしに`hasNextPage`を判定する定石。複数行が同じtimestampを持つときの不安定なpaginationを防ぐため、常に一意のフィールド（例: `id`）を第2の`orderBy`に含める。offset paginationは利用者が任意のページへ移動する必要がある場合（管理テーブル）だけ使う。
 
-### Soft Delete
+### Soft delete
 
 ```ts
-// Always filter explicitly — do not rely on middleware (hides behavior, hard to debug)
+// 常に明示的にフィルタする — middlewareに頼らない（挙動が隠れ、debugしにくい）
 const activeUsers = await prisma.user.findMany({ where: { deletedAt: null } });
 
 await prisma.user.update({ where: { id }, data: { deletedAt: new Date() } });
-await prisma.user.update({ where: { id }, data: { deletedAt: null } }); // restore
+await prisma.user.update({ where: { id }, data: { deletedAt: null } }); // 復元
 ```
 
-### Error Handling
+### エラー処理
 
 ```ts
-import { Prisma } from '@prisma/client'; // or the generated client path for your setup
+import { Prisma } from '@prisma/client'; // または環境に応じた生成clientのpath
 
 try {
   await prisma.user.create({ data: { email } });
@@ -225,27 +225,27 @@ try {
 }
 ```
 
-Common codes: `P2002` unique violation · `P2025` not found · `P2003` foreign key violation.
+主なcode: `P2002` 一意制約違反 · `P2025` 見つからない · `P2003` 外部キー違反。
 
-Catch at the service boundary and translate to domain errors. Never expose raw Prisma messages to API consumers.
+serviceの境界でcatchし、domain errorへ変換する。生のPrismaのメッセージをAPI利用者へ露出しない。
 
-### Connection Pool — Serverless
+### Connection pool — serverless
 
-Embed connection params directly in `DATABASE_URL` — string concatenation breaks if the URL already has query parameters (e.g. `?schema=public`):
+connectionのパラメータは`DATABASE_URL`へ直接埋め込む。URLに既にquery parameter（例: `?schema=public`）がある場合、文字列連結は壊れる。
 
 ```bash
-# .env — preferred: embed params in the URL
+# .env — 推奨: パラメータをURLへ埋め込む
 DATABASE_URL="postgresql://user:pass@host/db?connection_limit=1&pool_timeout=20"
 
-# With an external pooler (PgBouncer, Supabase pooler)
+# 外部pooler（PgBouncer、Supabase pooler）を使う場合
 DATABASE_URL="postgresql://user:pass@host/db?pgbouncer=true&connection_limit=1"
 ```
 
 ```ts
-// Vercel, AWS Lambda, and similar serverless runtimes:
-// cap pool to 1 per instance; connection_limit and pool_timeout controlled via DATABASE_URL
+// Vercel、AWS Lambdaなどのserverless runtime:
+// インスタンスあたりのpoolを1に抑える。connection_limitとpool_timeoutはDATABASE_URLで制御する
 
-// Adapter-based setup (if your Prisma install requires an adapter):
+// adapterベースの構成（Prismaのinstallがadapterを要求する場合）:
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -253,19 +253,19 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 
-// Direct setup (if your Prisma install does not require an adapter):
+// 直接構成（Prismaのinstallがadapterを要求しない場合）:
 // const prisma = new PrismaClient();
 ```
 
-## Anti-Patterns
+## アンチパターン
 
-### `updateMany` returns a count, not records
+### `updateMany`はrecordではなくcountを返す
 
 ```ts
-// BAD: result is { count: 2 } — users[0] is undefined
+// BAD: 結果は { count: 2 } — users[0]はundefined
 const users = await prisma.user.updateMany({ where: { role: 'GUEST' }, data: { role: 'USER' } });
 
-// GOOD: capture IDs first, then update, then fetch only the affected rows
+// GOOD: 先にIDを取得し、更新し、対象行だけを取り直す
 const targets = await prisma.user.findMany({
   where: { role: 'GUEST' },
   select: { id: true },
@@ -275,76 +275,76 @@ await prisma.user.updateMany({ where: { id: { in: ids } }, data: { role: 'USER' 
 const updated = await prisma.user.findMany({ where: { id: { in: ids } } });
 ```
 
-Same applies to `deleteMany` — returns `{ count: n }`, never the deleted rows.
+`deleteMany`も同様 — `{ count: n }`を返し、削除された行は決して返さない。
 
-### `$transaction` interactive form times out after 5 seconds
+### `$transaction`のinteractive形式は5秒でtimeoutする
 
 ```ts
-// BAD: external call inside transaction exceeds 5s default → "Transaction already closed"
+// BAD: transaction内の外部呼び出しが既定の5秒を超える → "Transaction already closed"
 await prisma.$transaction(async (tx) => {
   const user = await tx.user.findUniqueOrThrow({ where: { id } });
-  await sendWelcomeEmail(user.email); // external call
+  await sendWelcomeEmail(user.email); // 外部呼び出し
   await tx.user.update({ where: { id }, data: { emailSent: true } });
 });
 
-// GOOD: external calls outside the transaction
+// GOOD: 外部呼び出しはtransactionの外へ
 const user = await prisma.user.findUniqueOrThrow({ where: { id } });
 await sendWelcomeEmail(user.email);
 await prisma.user.update({ where: { id }, data: { emailSent: true } });
 
-// Only raise timeout when bulk processing genuinely needs it
+// bulk処理で本当に必要なときだけtimeoutを引き上げる
 await prisma.$transaction(async (tx) => { ... }, { timeout: 30_000 });
 ```
 
-### `migrate dev` can reset the database
+### `migrate dev`はdatabaseをresetしうる
 
-`migrate dev` detects schema drift and may prompt to reset the DB, dropping all data.
+`migrate dev`はschemaのdriftを検知し、DBのresetを促してすべてのデータを削除することがある。
 
 ```bash
-# NEVER on shared dev, staging, or production
+# 共有dev、staging、productionでは絶対に実行しない
 npx prisma migrate dev --name add_column
 
-# Safe everywhere except local solo dev
+# ローカルの単独開発以外ではこちらが安全
 npx prisma migrate deploy
 
-# Check drift without applying
+# 適用せずにdriftを確認する
 npx prisma migrate diff \
   --from-migrations ./prisma/migrations \
   --to-schema-datamodel ./prisma/schema.prisma \
   --shadow-database-url "$SHADOW_DATABASE_URL"
 ```
 
-### Manually editing a migration file breaks future deploys
+### migrationファイルを手で編集すると以後のdeployが壊れる
 
-Prisma checksums every migration file. Editing after apply causes `P3006 checksum mismatch` on every environment where the original already ran. Create a new migration instead.
+Prismaはすべてのmigrationファイルのchecksumを取る。適用後に編集すると、元のmigrationが既に実行済みのすべての環境で`P3006 checksum mismatch`が発生する。代わりに新しいmigrationを作る。
 
-### Breaking schema changes require multi-step migration
+### 破壊的なschema変更は多段階migrationが必要
 
-Adding `NOT NULL` to an existing column or renaming a column in one migration will lock the table or drop data. Use expand-and-contract:
+既存列への`NOT NULL`追加や、1回のmigrationでの列名変更は、テーブルをロックするかデータを失わせる。expand-and-contractを使う。
 
 ```bash
-# Step 1: create migration locally, then deploy
-npx prisma migrate dev --name add_new_column   # local only
+# Step 1: ローカルでmigrationを作成し、次にdeployする
+npx prisma migrate dev --name add_new_column   # ローカルのみ
 npx prisma migrate deploy                       # staging / production
 ```
 
 ```ts
-// Step 2: backfill data (run in a script or migration job, not in the shell)
+// Step 2: データをbackfillする（shellではなくscriptまたはmigration jobで実行する）
 await prisma.user.updateMany({ data: { newColumn: derivedValue } });
 ```
 
 ```bash
-# Step 3: create the NOT NULL constraint migration locally, then deploy
-npx prisma migrate dev --name make_new_column_required  # local only
+# Step 3: NOT NULL制約のmigrationをローカルで作成し、次にdeployする
+npx prisma migrate dev --name make_new_column_required  # ローカルのみ
 npx prisma migrate deploy                               # staging / production
 ```
 
-### `@updatedAt` does not fire on `updateMany`
+### `@updatedAt`は`updateMany`で発火しない
 
-`@updatedAt` is set automatically only on `update` and `upsert`. Bulk writes leave it stale.
+`@updatedAt`は`update`と`upsert`でのみ自動設定される。bulk書き込みでは古い値のまま残る。
 
 ```ts
-// BAD: updatedAt stays at its old value
+// BAD: updatedAtが古い値のまま
 await prisma.post.updateMany({ where: { authorId }, data: { published: true } });
 
 // GOOD
@@ -354,48 +354,48 @@ await prisma.post.updateMany({
 });
 ```
 
-### Soft delete + `findUniqueOrThrow` leaks deleted records
+### soft delete + `findUniqueOrThrow`は削除済みrecordを漏らす
 
-`findUniqueOrThrow` throws `P2025` only when the row does not exist in the DB. Soft-deleted rows still exist and are returned without error.
+`findUniqueOrThrow`は行がDBに存在しない場合にのみ`P2025`を投げる。soft deleteされた行は存在するため、エラーにならず返る。
 
-`findUniqueOrThrow` requires a unique constraint field in `where` — adding `deletedAt: null` alongside `id` breaks the type because `{ id, deletedAt }` is not a compound unique constraint. Use `findFirstOrThrow` instead.
+`findUniqueOrThrow`は`where`に一意制約フィールドを要求するため、`id`に加えて`deletedAt: null`を書くと`{ id, deletedAt }`が複合一意制約でないため型が壊れる。代わりに`findFirstOrThrow`を使う。
 
 ```ts
-// BAD: returns soft-deleted user
+// BAD: soft deleteされたuserを返す
 const user = await prisma.user.findUniqueOrThrow({ where: { id } });
 
-// BAD: Prisma type error — { id, deletedAt } is not a unique constraint
+// BAD: Prismaの型エラー — { id, deletedAt } は一意制約ではない
 const user = await prisma.user.findUniqueOrThrow({ where: { id, deletedAt: null } });
 
-// GOOD: findFirstOrThrow supports arbitrary where conditions
+// GOOD: findFirstOrThrowは任意のwhere条件に対応する
 const user = await prisma.user.findFirstOrThrow({ where: { id, deletedAt: null } });
 ```
 
-### `deleteMany` without `where` deletes every row
+### `where`なしの`deleteMany`は全行を削除する
 
 ```ts
-// BAD: silently wipes the table
+// BAD: 無言でテーブルを空にする
 await prisma.post.deleteMany();
 
 // GOOD
 await prisma.post.deleteMany({ where: { authorId: userId } });
 ```
 
-## Best Practices
+## ベストプラクティス
 
-| Rule | Reason |
+| ルール | 理由 |
 |---|---|
-| `migrate deploy` in CI/CD, `migrate dev` only locally | `migrate dev` can reset the DB on drift |
-| Map entities to response DTOs | Prevents leaking internal fields |
-| Catch `PrismaClientKnownRequestError` at service boundary | Translate to domain errors |
-| Prefer `*OrThrow` methods over manual null checks | Throws P2025 automatically; use `findFirstOrThrow` when filtering non-unique fields |
-| `connection_limit=1` + external pooler in serverless | Prevents connection exhaustion |
-| Always provide `where` on `deleteMany` | Prevents accidental table wipe |
-| Set `updatedAt: new Date()` manually in `updateMany` | `@updatedAt` skips bulk writes |
+| CI/CDでは`migrate deploy`、`migrate dev`はローカルのみ | `migrate dev`はdrift時にDBをresetしうる |
+| entityをresponse DTOへmapする | 内部フィールドの漏洩を防ぐ |
+| serviceの境界で`PrismaClientKnownRequestError`をcatchする | domain errorへ変換する |
+| 手動のnullチェックより`*OrThrow`メソッドを優先する | P2025が自動で投げられる。一意でないフィールドで絞る場合は`findFirstOrThrow`を使う |
+| serverlessでは`connection_limit=1`＋外部pooler | connectionの枯渇を防ぐ |
+| `deleteMany`には必ず`where`を指定する | 誤ってテーブルを空にするのを防ぐ |
+| `updateMany`では`updatedAt: new Date()`を手動で設定する | `@updatedAt`はbulk書き込みをスキップする |
 
-## Related Skills
+## 関連skill
 
-- `nestjs-patterns` — NestJS service layer that integrates Prisma
-- `postgres-patterns` — PostgreSQL-level indexing and connection tuning
-- `database-migrations` — multi-step migration planning for production
-- `backend-patterns` — general API and service layer design
+- `nestjs-patterns` — Prismaを統合するNestJSのservice層
+- `postgres-patterns` — PostgreSQLレベルのindexとconnectionのチューニング
+- `database-migrations` — 本番向けの多段階migration計画
+- `backend-patterns` — 一般的なAPIとservice層の設計

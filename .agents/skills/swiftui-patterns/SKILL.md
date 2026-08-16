@@ -1,38 +1,38 @@
 ---
 name: swiftui-patterns
-description: SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices. Use when building or reviewing SwiftUI views, @Observable state, navigation, or render performance.
+description: SwiftUIのアーキテクチャパターン、@Observableによるstate管理、view composition、navigation、performance最適化、モダンなiOS/macOS UIのベストプラクティス。SwiftUIのview、@Observableのstate、navigation、render performanceを実装・レビューするときに使う。
 ---
 
 # SwiftUI Patterns
 
-Modern SwiftUI patterns for building declarative, performant user interfaces on Apple platforms. Covers the Observation framework, view composition, type-safe navigation, and performance optimization.
+Appleプラットフォームで宣言的かつ高performanceなUIを構築するためのモダンなSwiftUIパターン。Observation framework、view composition、型安全なnavigation、performance最適化を扱う。
 
-## When to Activate
+## 適用する場面
 
-- Building SwiftUI views and managing state (`@State`, `@Observable`, `@Binding`)
-- Designing navigation flows with `NavigationStack`
-- Structuring view models and data flow
-- Optimizing rendering performance for lists and complex layouts
-- Working with environment values and dependency injection in SwiftUI
+- SwiftUIのviewを実装し、stateを管理するとき（`@State`、`@Observable`、`@Binding`）
+- `NavigationStack`でnavigationフローを設計するとき
+- view modelとデータフローを構造化するとき
+- listや複雑なレイアウトのrendering performanceを最適化するとき
+- SwiftUIでenvironment値とdependency injectionを扱うとき
 
-## State Management
+## State管理
 
-### Property Wrapper Selection
+### Property Wrapperの選択
 
-Choose the simplest wrapper that fits:
+条件に合う最も単純なwrapperを選ぶ。
 
-| Wrapper | Use Case |
-|---------|----------|
-| `@State` | View-local value types (toggles, form fields, sheet presentation) |
-| `@Binding` | Two-way reference to parent's `@State` |
-| `@Observable` class + `@State` | Owned model with multiple properties |
-| `@Observable` class (no wrapper) | Read-only reference passed from parent |
-| `@Bindable` | Two-way binding to an `@Observable` property |
-| `@Environment` | Shared dependencies injected via `.environment()` |
+| Wrapper | 用途 |
+|---------|------|
+| `@State` | view内に閉じた値型（toggle、formフィールド、sheetの表示） |
+| `@Binding` | 親の`@State`への双方向参照 |
+| `@Observable` class + `@State` | 複数プロパティを持つ、所有するmodel |
+| `@Observable` class（wrapperなし） | 親から渡される読み取り専用の参照 |
+| `@Bindable` | `@Observable`のプロパティへの双方向binding |
+| `@Environment` | `.environment()`で注入される共有dependency |
 
 ### @Observable ViewModel
 
-Use `@Observable` (not `ObservableObject`) — it tracks property-level changes so SwiftUI only re-renders views that read the changed property:
+`ObservableObject`ではなく`@Observable`を使う。プロパティ単位で変更を追跡するため、変更されたプロパティを読むviewだけが再renderされる。
 
 ```swift
 @Observable
@@ -55,7 +55,7 @@ final class ItemListViewModel {
 }
 ```
 
-### View Consuming the ViewModel
+### ViewModelを使うView
 
 ```swift
 struct ItemListView: View {
@@ -76,16 +76,16 @@ struct ItemListView: View {
 }
 ```
 
-### Environment Injection
+### Environmentによる注入
 
-Replace `@EnvironmentObject` with `@Environment`:
+`@EnvironmentObject`を`@Environment`へ置き換える。
 
 ```swift
-// Inject
+// 注入
 ContentView()
     .environment(authManager)
 
-// Consume
+// 利用
 struct ProfileView: View {
     @Environment(AuthManager.self) private var auth
 
@@ -97,9 +97,9 @@ struct ProfileView: View {
 
 ## View Composition
 
-### Extract Subviews to Limit Invalidation
+### Subviewへ切り出して無効化範囲を狭める
 
-Break views into small, focused structs. When state changes, only the subview reading that state re-renders:
+viewを小さく責務の絞られたstructへ分割する。stateが変わったとき、そのstateを読むsubviewだけが再renderされる。
 
 ```swift
 struct OrderView: View {
@@ -115,7 +115,7 @@ struct OrderView: View {
 }
 ```
 
-### ViewModifier for Reusable Styling
+### 再利用可能なstyleのためのViewModifier
 
 ```swift
 struct CardModifier: ViewModifier {
@@ -136,9 +136,9 @@ extension View {
 
 ## Navigation
 
-### Type-Safe NavigationStack
+### 型安全なNavigationStack
 
-Use `NavigationStack` with `NavigationPath` for programmatic, type-safe routing:
+プログラム制御で型安全なroutingのため、`NavigationStack`と`NavigationPath`を使う。
 
 ```swift
 @Observable
@@ -181,9 +181,9 @@ struct RootView: View {
 
 ## Performance
 
-### Use Lazy Containers for Large Collections
+### 大きなコレクションにはLazyコンテナを使う
 
-`LazyVStack` and `LazyHStack` create views only when visible:
+`LazyVStack`と`LazyHStack`は表示されるときにだけviewを生成する。
 
 ```swift
 ScrollView {
@@ -195,45 +195,45 @@ ScrollView {
 }
 ```
 
-### Stable Identifiers
+### 安定した識別子
 
-Always use stable, unique IDs in `ForEach` — avoid using array indices:
+`ForEach`では常に安定した一意のIDを使う。配列のindexは使わない。
 
 ```swift
-// Use Identifiable conformance or explicit id
+// Identifiableへの準拠か明示的なidを使う
 ForEach(items, id: \.stableID) { item in
     ItemRow(item: item)
 }
 ```
 
-### Avoid Expensive Work in body
+### bodyで重い処理をしない
 
-- Never perform I/O, network calls, or heavy computation inside `body`
-- Use `.task {}` for async work — it cancels automatically when the view disappears
-- Use `.sensoryFeedback()` and `.geometryGroup()` sparingly in scroll views
-- Minimize `.shadow()`, `.blur()`, and `.mask()` in lists — they trigger offscreen rendering
+- `body`内でI/O、network呼び出し、重い計算を行わない
+- 非同期処理には`.task {}`を使う。viewが消えると自動的にキャンセルされる
+- scroll view内では`.sensoryFeedback()`と`.geometryGroup()`を控えめに使う
+- listでの`.shadow()`、`.blur()`、`.mask()`は最小限にする。offscreen renderingを誘発する
 
-### Equatable Conformance
+### Equatableへの準拠
 
-For views with expensive bodies, conform to `Equatable` to skip unnecessary re-renders:
+bodyが重いviewは`Equatable`へ準拠させ、不要な再renderを避ける。
 
 ```swift
 struct ExpensiveChartView: View, Equatable {
-    let dataPoints: [DataPoint] // DataPoint must conform to Equatable
+    let dataPoints: [DataPoint] // DataPointはEquatableへ準拠している必要がある
 
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.dataPoints == rhs.dataPoints
     }
 
     var body: some View {
-        // Complex chart rendering
+        // 複雑なchartのrendering
     }
 }
 ```
 
 ## Previews
 
-Use `#Preview` macro with inline mock data for fast iteration:
+素早く反復するため、`#Preview`マクロとインラインのmockデータを使う。
 
 ```swift
 #Preview("Empty state") {
@@ -245,15 +245,15 @@ Use `#Preview` macro with inline mock data for fast iteration:
 }
 ```
 
-## Anti-Patterns to Avoid
+## 避けるべきアンチパターン
 
-- Using `ObservableObject` / `@Published` / `@StateObject` / `@EnvironmentObject` in new code — migrate to `@Observable`
-- Putting async work directly in `body` or `init` — use `.task {}` or explicit load methods
-- Creating view models as `@State` inside child views that don't own the data — pass from parent instead
-- Using `AnyView` type erasure — prefer `@ViewBuilder` or `Group` for conditional views
-- Ignoring `Sendable` requirements when passing data to/from actors
+- 新規コードで`ObservableObject` / `@Published` / `@StateObject` / `@EnvironmentObject`を使う — `@Observable`へ移行する
+- 非同期処理を`body`や`init`へ直接置く — `.task {}`か明示的なloadメソッドを使う
+- データを所有しない子viewの中でview modelを`@State`として生成する — 親から渡す
+- `AnyView`による型消去を使う — 条件付きviewには`@ViewBuilder`か`Group`を優先する
+- actorとの間でデータを受け渡す際に`Sendable`要件を無視する
 
-## References
+## 参照
 
-See skill: `swift-actor-persistence` for actor-based persistence patterns.
-See skill: `swift-protocol-di-testing` for protocol-based DI and testing with Swift Testing.
+actorベースの永続化パターンはskill: `swift-actor-persistence`を参照。
+protocolベースのDIとSwift Testingでのテストはskill: `swift-protocol-di-testing`を参照。

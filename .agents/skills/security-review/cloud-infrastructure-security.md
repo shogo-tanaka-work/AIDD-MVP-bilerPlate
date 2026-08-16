@@ -1,49 +1,49 @@
 | name | description |
 |------|-------------|
-| cloud-infrastructure-security | Use this skill when deploying to cloud platforms, configuring infrastructure, managing IAM policies, setting up logging/monitoring, or implementing CI/CD pipelines. Provides cloud security checklist aligned with best practices. |
+| cloud-infrastructure-security | クラウドプラットフォームへのdeploy、インフラ設定、IAM policyの管理、logging/monitoringの構築、CI/CD pipelineの実装を行うときにこのskillを使う。ベストプラクティスに沿ったクラウドセキュリティのチェックリストを提供する。 |
 
 # Cloud & Infrastructure Security Skill
 
-This skill ensures cloud infrastructure, CI/CD pipelines, and deployment configurations follow security best practices and comply with industry standards.
+このskillは、クラウドインフラ、CI/CD pipeline、deploy設定がセキュリティのベストプラクティスと業界標準に従うようにする。
 
-## When to Activate
+## 発動タイミング
 
-- Deploying applications to cloud platforms (AWS, Vercel, Railway, Cloudflare)
-- Configuring IAM roles and permissions
-- Setting up CI/CD pipelines
-- Implementing infrastructure as code (Terraform, CloudFormation)
-- Configuring logging and monitoring
-- Managing secrets in cloud environments
-- Setting up CDN and edge security
-- Implementing disaster recovery and backup strategies
+- クラウドプラットフォーム（AWS、Vercel、Railway、Cloudflare）へアプリケーションをdeployするとき
+- IAM roleと権限を設定するとき
+- CI/CD pipelineを構築するとき
+- infrastructure as code（Terraform、CloudFormation）を実装するとき
+- loggingとmonitoringを設定するとき
+- クラウド環境のsecretを管理するとき
+- CDNとedgeのセキュリティを設定するとき
+- 災害復旧とバックアップ戦略を実装するとき
 
-## Cloud Security Checklist
+## クラウドセキュリティチェックリスト
 
-### 1. IAM & Access Control
+### 1. IAMとアクセス制御
 
-#### Principle of Least Privilege
+#### 最小権限の原則
 
 ```yaml
-# PASS: CORRECT: Minimal permissions
+# PASS: CORRECT: 最小限の権限
 iam_role:
   permissions:
-    - s3:GetObject  # Only read access
+    - s3:GetObject  # 読み取りのみ
     - s3:ListBucket
   resources:
-    - arn:aws:s3:::my-bucket/*  # Specific bucket only
+    - arn:aws:s3:::my-bucket/*  # 特定のbucketのみ
 
-# FAIL: WRONG: Overly broad permissions
+# FAIL: WRONG: 広すぎる権限
 iam_role:
   permissions:
-    - s3:*  # All S3 actions
+    - s3:*  # すべてのS3操作
   resources:
-    - "*"  # All resources
+    - "*"  # すべてのresource
 ```
 
-#### Multi-Factor Authentication (MFA)
+#### 多要素認証（MFA）
 
 ```bash
-# ALWAYS enable MFA for root/admin accounts
+# root/adminアカウントでは必ずMFAを有効化する
 aws iam enable-mfa-device \
   --user-name admin \
   --serial-number arn:aws:iam::123456789:mfa/admin \
@@ -51,55 +51,55 @@ aws iam enable-mfa-device \
   --authentication-code2 789012
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] No root account usage in production
-- [ ] MFA enabled for all privileged accounts
-- [ ] Service accounts use roles, not long-lived credentials
-- [ ] IAM policies follow least privilege
-- [ ] Regular access reviews conducted
-- [ ] Unused credentials rotated or removed
+- [ ] 本番でrootアカウントを使っていない
+- [ ] 特権アカウントすべてでMFAが有効
+- [ ] service accountは長命なcredentialsではなくroleを使う
+- [ ] IAM policyが最小権限に従っている
+- [ ] 定期的なアクセスレビューを実施している
+- [ ] 未使用のcredentialsをローテーションまたは削除している
 
-### 2. Secrets Management
+### 2. Secretsの管理
 
-#### Cloud Secrets Managers
+#### クラウドのSecrets Manager
 
 ```typescript
-// PASS: CORRECT: Use cloud secrets manager
+// PASS: CORRECT: クラウドのsecrets managerを使う
 import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 
 const client = new SecretsManager({ region: 'us-east-1' });
 const secret = await client.getSecretValue({ SecretId: 'prod/api-key' });
 const apiKey = JSON.parse(secret.SecretString).key;
 
-// FAIL: WRONG: Hardcoded or in environment variables only
-const apiKey = process.env.API_KEY; // Not rotated, not audited
+// FAIL: WRONG: ハードコード、または環境変数だけに置く
+const apiKey = process.env.API_KEY; // ローテーションされず、監査もされない
 ```
 
-#### Secrets Rotation
+#### Secretsのローテーション
 
 ```bash
-# Set up automatic rotation for database credentials
+# databaseのcredentialsに自動ローテーションを設定する
 aws secretsmanager rotate-secret \
   --secret-id prod/db-password \
   --rotation-lambda-arn arn:aws:lambda:region:account:function:rotate \
   --rotation-rules AutomaticallyAfterDays=30
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] All secrets stored in cloud secrets manager (AWS Secrets Manager, Vercel Secrets)
-- [ ] Automatic rotation enabled for database credentials
-- [ ] API keys rotated at least quarterly
-- [ ] No secrets in code, logs, or error messages
-- [ ] Audit logging enabled for secret access
+- [ ] すべてのsecretをクラウドのsecrets manager（AWS Secrets Manager、Vercel Secrets）に保存している
+- [ ] databaseのcredentialsで自動ローテーションが有効
+- [ ] API keyを少なくとも四半期ごとにローテーションしている
+- [ ] コード、ログ、エラーメッセージにsecretがない
+- [ ] secretアクセスの監査ログが有効
 
-### 3. Network Security
+### 3. ネットワークセキュリティ
 
-#### VPC and Firewall Configuration
+#### VPCとfirewallの設定
 
 ```terraform
-# PASS: CORRECT: Restricted security group
+# PASS: CORRECT: 制限されたsecurity group
 resource "aws_security_group" "app" {
   name = "app-sg"
 
@@ -107,42 +107,42 @@ resource "aws_security_group" "app" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]  # Internal VPC only
+    cidr_blocks = ["10.0.0.0/16"]  # 内部VPCのみ
   }
 
   egress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Only HTTPS outbound
+    cidr_blocks = ["0.0.0.0/0"]  # 送信はHTTPSのみ
   }
 }
 
-# FAIL: WRONG: Open to the internet
+# FAIL: WRONG: インターネットへ開放
 resource "aws_security_group" "bad" {
   ingress {
     from_port   = 0
     to_port     = 65535
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # All ports, all IPs!
+    cidr_blocks = ["0.0.0.0/0"]  # 全port、全IP!
   }
 }
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] Database not publicly accessible
-- [ ] SSH/RDP ports restricted to VPN/bastion only
-- [ ] Security groups follow least privilege
-- [ ] Network ACLs configured
-- [ ] VPC flow logs enabled
+- [ ] databaseが公開されていない
+- [ ] SSH/RDP portをVPN/bastionのみに制限している
+- [ ] security groupが最小権限に従っている
+- [ ] Network ACLを設定している
+- [ ] VPC flow logsが有効
 
-### 4. Logging & Monitoring
+### 4. LoggingとMonitoring
 
-#### CloudWatch/Logging Configuration
+#### CloudWatch/loggingの設定
 
 ```typescript
-// PASS: CORRECT: Comprehensive logging
+// PASS: CORRECT: 網羅的なlogging
 import { CloudWatchLogsClient, CreateLogStreamCommand } from '@aws-sdk/client-cloudwatch-logs';
 
 const logSecurityEvent = async (event: SecurityEvent) => {
@@ -156,28 +156,28 @@ const logSecurityEvent = async (event: SecurityEvent) => {
         userId: event.userId,
         ip: event.ip,
         result: event.result,
-        // Never log sensitive data
+        // 機密dataは決してログに出さない
       })
     }]
   });
 };
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] CloudWatch/logging enabled for all services
-- [ ] Failed authentication attempts logged
-- [ ] Admin actions audited
-- [ ] Log retention configured (90+ days for compliance)
-- [ ] Alerts configured for suspicious activity
-- [ ] Logs centralized and tamper-proof
+- [ ] すべてのserviceでCloudWatch/loggingが有効
+- [ ] 認証失敗を記録している
+- [ ] admin操作を監査している
+- [ ] ログ保持期間を設定している（コンプライアンス上90日以上）
+- [ ] 不審な挙動へのアラートを設定している
+- [ ] ログを集約し改ざん不能にしている
 
-### 5. CI/CD Pipeline Security
+### 5. CI/CD pipelineのセキュリティ
 
-#### Secure Pipeline Configuration
+#### 安全なpipeline設定
 
 ```yaml
-# PASS: CORRECT: Secure GitHub Actions workflow
+# PASS: CORRECT: 安全なGitHub Actions workflow
 name: Deploy
 
 on:
@@ -188,20 +188,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: read  # Minimal permissions
+      contents: read  # 最小限の権限
 
     steps:
       - uses: actions/checkout@v4
 
-      # Scan for secrets
+      # secretをscanする
       - name: Secret scanning
         uses: trufflesecurity/trufflehog@main
 
-      # Dependency audit
+      # 依存関係の監査
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
-      # Use OIDC, not long-lived tokens
+      # 長命なtokenではなくOIDCを使う
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -209,40 +209,40 @@ jobs:
           aws-region: us-east-1
 ```
 
-#### Supply Chain Security
+#### サプライチェーンのセキュリティ
 
 ```json
-// package.json - Use lock files and integrity checks
+// package.json - lock fileとintegrity checkを使う
 {
   "scripts": {
-    "install": "npm ci",  // Use ci for reproducible builds
+    "install": "npm ci",  // 再現可能なbuildのためciを使う
     "audit": "npm audit --audit-level=moderate",
     "check": "npm outdated"
   }
 }
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] OIDC used instead of long-lived credentials
-- [ ] Secrets scanning in pipeline
-- [ ] Dependency vulnerability scanning
-- [ ] Container image scanning (if applicable)
-- [ ] Branch protection rules enforced
-- [ ] Code review required before merge
-- [ ] Signed commits enforced
+- [ ] 長命なcredentialsではなくOIDCを使っている
+- [ ] pipelineでsecret scanningを行っている
+- [ ] 依存関係の脆弱性scanを行っている
+- [ ] container imageのscanを行っている（該当する場合）
+- [ ] branch protection ruleを強制している
+- [ ] merge前のコードレビューを必須にしている
+- [ ] 署名付きcommitを必須にしている
 
-### 6. Cloudflare & CDN Security
+### 6. CloudflareとCDNのセキュリティ
 
-#### Cloudflare Security Configuration
+#### Cloudflareのセキュリティ設定
 
 ```typescript
-// PASS: CORRECT: Cloudflare Workers with security headers
+// PASS: CORRECT: security headerを付けたCloudflare Workers
 export default {
   async fetch(request: Request): Promise<Response> {
     const response = await fetch(request);
 
-    // Add security headers
+    // security headerを追加する
     const headers = new Headers(response.headers);
     headers.set('X-Frame-Options', 'DENY');
     headers.set('X-Content-Type-Options', 'nosniff');
@@ -257,90 +257,90 @@ export default {
 };
 ```
 
-#### WAF Rules
+#### WAF rule
 
 ```bash
-# Enable Cloudflare WAF managed rules
+# CloudflareのWAF managed ruleを有効化する
 # - OWASP Core Ruleset
 # - Cloudflare Managed Ruleset
-# - Rate limiting rules
-# - Bot protection
+# - rate limitingのrule
+# - bot protection
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] WAF enabled with OWASP rules
-- [ ] Rate limiting configured
-- [ ] Bot protection active
-- [ ] DDoS protection enabled
-- [ ] Security headers configured
-- [ ] SSL/TLS strict mode enabled
+- [ ] OWASP ruleを使ったWAFが有効
+- [ ] rate limitingを設定している
+- [ ] bot protectionが有効
+- [ ] DDoS protectionが有効
+- [ ] security headerを設定している
+- [ ] SSL/TLSのstrictモードが有効
 
-### 7. Backup & Disaster Recovery
+### 7. バックアップと災害復旧
 
-#### Automated Backups
+#### 自動バックアップ
 
 ```terraform
-# PASS: CORRECT: Automated RDS backups
+# PASS: CORRECT: RDSの自動バックアップ
 resource "aws_db_instance" "main" {
   allocated_storage     = 20
   engine               = "postgres"
 
-  backup_retention_period = 30  # 30 days retention
+  backup_retention_period = 30  # 保持期間30日
   backup_window          = "03:00-04:00"
   maintenance_window     = "mon:04:00-mon:05:00"
 
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
-  deletion_protection = true  # Prevent accidental deletion
+  deletion_protection = true  # 誤削除を防ぐ
 }
 ```
 
-#### Verification Steps
+#### 検証手順
 
-- [ ] Automated daily backups configured
-- [ ] Backup retention meets compliance requirements
-- [ ] Point-in-time recovery enabled
-- [ ] Backup testing performed quarterly
-- [ ] Disaster recovery plan documented
-- [ ] RPO and RTO defined and tested
+- [ ] 日次の自動バックアップを設定している
+- [ ] バックアップ保持期間がコンプライアンス要件を満たしている
+- [ ] point-in-time recoveryが有効
+- [ ] 四半期ごとにバックアップのtestを実施している
+- [ ] 災害復旧計画を文書化している
+- [ ] RPOとRTOを定義しtestしている
 
-## Pre-Deployment Cloud Security Checklist
+## Deploy前のクラウドセキュリティチェックリスト
 
-Before ANY production cloud deployment:
+本番クラウドへdeployする前に必ず確認する:
 
-- [ ] **IAM**: Root account not used, MFA enabled, least privilege policies
-- [ ] **Secrets**: All secrets in cloud secrets manager with rotation
-- [ ] **Network**: Security groups restricted, no public databases
-- [ ] **Logging**: CloudWatch/logging enabled with retention
-- [ ] **Monitoring**: Alerts configured for anomalies
-- [ ] **CI/CD**: OIDC auth, secrets scanning, dependency audits
-- [ ] **CDN/WAF**: Cloudflare WAF enabled with OWASP rules
-- [ ] **Encryption**: Data encrypted at rest and in transit
-- [ ] **Backups**: Automated backups with tested recovery
-- [ ] **Compliance**: GDPR/HIPAA requirements met (if applicable)
-- [ ] **Documentation**: Infrastructure documented, runbooks created
-- [ ] **Incident Response**: Security incident plan in place
+- [ ] **IAM**: rootアカウント不使用、MFA有効、最小権限のpolicy
+- [ ] **Secrets**: すべてのsecretをローテーション付きでクラウドのsecrets managerに保存
+- [ ] **Network**: security groupを制限、公開databaseなし
+- [ ] **Logging**: 保持期間付きでCloudWatch/loggingが有効
+- [ ] **Monitoring**: 異常へのアラートを設定
+- [ ] **CI/CD**: OIDC認証、secret scanning、依存関係の監査
+- [ ] **CDN/WAF**: OWASP rule付きのCloudflare WAFが有効
+- [ ] **Encryption**: 保存時と転送時のdataを暗号化
+- [ ] **Backups**: 復旧をtest済みの自動バックアップ
+- [ ] **Compliance**: GDPR/HIPAA要件を満たす（該当する場合）
+- [ ] **Documentation**: インフラを文書化し、runbookを作成
+- [ ] **Incident Response**: セキュリティインシデント対応計画を整備
 
-## Common Cloud Security Misconfigurations
+## よくあるクラウドの設定ミス
 
-### S3 Bucket Exposure
+### S3 bucketの公開
 
 ```bash
-# FAIL: WRONG: Public bucket
+# FAIL: WRONG: 公開bucket
 aws s3api put-bucket-acl --bucket my-bucket --acl public-read
 
-# PASS: CORRECT: Private bucket with specific access
+# PASS: CORRECT: アクセスを限定したprivate bucket
 aws s3api put-bucket-acl --bucket my-bucket --acl private
 aws s3api put-bucket-policy --bucket my-bucket --policy file://policy.json
 ```
 
-### RDS Public Access
+### RDSの公開アクセス
 
 ```terraform
 # FAIL: WRONG
 resource "aws_db_instance" "bad" {
-  publicly_accessible = true  # NEVER do this!
+  publicly_accessible = true  # 絶対にやらない!
 }
 
 # PASS: CORRECT
@@ -350,7 +350,7 @@ resource "aws_db_instance" "good" {
 }
 ```
 
-## Resources
+## 参考資料
 
 - [AWS Security Best Practices](https://aws.amazon.com/security/best-practices/)
 - [CIS AWS Foundations Benchmark](https://www.cisecurity.org/benchmark/amazon_web_services)
@@ -358,4 +358,4 @@ resource "aws_db_instance" "good" {
 - [OWASP Cloud Security](https://owasp.org/www-project-cloud-security/)
 - [Terraform Security Best Practices](https://www.terraform.io/docs/cloud/guides/recommended-practices/)
 
-**Remember**: Cloud misconfigurations are the leading cause of data breaches. A single exposed S3 bucket or overly permissive IAM policy can compromise your entire infrastructure. Always follow the principle of least privilege and defense in depth.
+**覚えておくこと**: クラウドの設定ミスはデータ漏えいの最大の原因である。公開されたS3 bucket一つ、あるいは緩すぎるIAM policy一つで、インフラ全体が危険にさらされる。常に最小権限の原則と多層防御に従う。

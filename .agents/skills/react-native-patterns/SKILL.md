@@ -1,37 +1,37 @@
 ---
 name: react-native-patterns
-description: React Native and Expo app patterns — Expo Router navigation, state separation (server/client/route/form), TanStack Query data fetching with Zod, performant lists, NativeWind/StyleSheet styling, native APIs, and secure storage. Use when building or editing React Native / Expo screens, components, navigation, or data layers.
+description: React NativeとExpoのアプリパターン — Expo Routerによるnavigation、stateの分離（server/client/route/form）、TanStack QueryとZodによるdata fetching、高performanceなlist、NativeWind/StyleSheetによるstyling、native API、secure storage。React Native / Expoのscreen、component、navigation、data層を実装・編集するときに使う。
 origin: ECC
 ---
 
-# React Native / Expo Patterns
+# React Native / Expoパターン
 
-Practical patterns for building production React Native apps with Expo. Covers navigation, state, data fetching, lists, styling, and native APIs. Pairs with the `rules/react-native/` ruleset: rules say *what* to enforce, this skill shows *how*.
+Expoで本番品質のReact Nativeアプリを作るための実践的なパターン。navigation、state、data fetching、list、styling、native APIを扱う。`rules/react-native/`のrulesetと対になる。rulesが*何を*強制するかを示し、このskillが*どう*実現するかを示す。
 
-Libraries named below (NativeWind, Zustand/Jotai, TanStack Query) are common, well-established options shown for illustration — the patterns matter more than the specific package, and any equivalent works. Zod is used for validation to stay consistent with ECC's existing `typescript/` rules.
+以下で挙げるライブラリ（NativeWind、Zustand/Jotai、TanStack Query）は説明のために示した一般的で定着した選択肢であり、特定のパッケージよりパターン自体が重要で、同等のものなら何でもよい。validationにZodを使うのは、ECCの既存の`typescript/`ルールと揃えるためである。
 
-These patterns assume the managed Expo workflow (Expo Router, EAS, `expo-*` modules) on the New Architecture (the default in recent Expo SDKs, mandatory from SDK 55+). They do NOT assume the browser DOM — React Native has no `<div>`, no URL bar, and no web data-fetching defaults.
+これらのパターンは、New Architecture（近年のExpo SDKの既定であり、SDK 55以降は必須）上のmanaged Expo workflow（Expo Router、EAS、`expo-*` module）を前提とする。browserのDOMは前提としない。React Nativeには`<div>`もURLバーもwebのdata fetchingの既定もない。
 
-## When to Activate
+## 発動タイミング
 
-Use this skill when:
+次のときにこのskillを使う。
 
-- Building or editing React Native / Expo screens, components, or navigation
-- Setting up routing with Expo Router (file-based `app/` directory)
-- Deciding where state belongs (server cache vs client store vs route params vs form)
-- Wiring data fetching with TanStack Query and validating responses with Zod
-- Rendering long or heavy lists
-- Choosing or applying a styling approach (NativeWind or StyleSheet)
-- Accessing native device APIs (camera, location, notifications) or secure storage
-- Reviewing RN code for mobile-specific issues
+- React Native / Expoのscreen、component、navigationを実装・編集するとき
+- Expo Router（file-basedの`app/`ディレクトリ）でroutingを設定するとき
+- stateの置き場所を判断するとき（server cacheかclient storeかroute paramsかform）
+- TanStack Queryでdata fetchingを組み、Zodでresponseを検証するとき
+- 長い、あるいは重いlistを描画するとき
+- stylingの方式を選ぶ・適用するとき（NativeWindまたはStyleSheet）
+- native device API（camera、location、通知）やsecure storageを使うとき
+- モバイル固有の観点でRNコードをレビューするとき
 
-Do NOT use the web/React-DOM patterns here — URL-as-state, `<div>`, and SWR-for-browser do not apply to React Native.
+ここではweb/React-DOMのパターンを使わない。URL-as-state、`<div>`、browser向けのSWRはReact Nativeに当てはまらない。
 
-## Core Concepts
+## 中核概念
 
-### Project structure (Expo Router)
+### プロジェクト構成（Expo Router）
 
-File-based routing under `app/`. Keep route files thin: they read and validate params, then delegate to a screen component that lives in `components/` or `features/`.
+`app/`配下のfile-based routing。route fileは薄く保つ。paramsを読んで検証し、`components/`または`features/`にあるscreen componentへ委譲する。
 
 ```
 app/
@@ -45,9 +45,9 @@ features/
   user/UserProfile.tsx
 ```
 
-### Navigation: validate route params
+### navigation: route paramsを検証する
 
-Deep links and dynamic routes deliver untrusted strings. Validate them with Zod before use.
+deep linkとdynamic routeは信頼できない文字列を渡してくる。使う前にZodで検証する。
 
 ```tsx
 // app/user/[id].tsx
@@ -67,24 +67,24 @@ export default function UserRoute() {
 }
 ```
 
-### State: keep concerns separate
+### state: 関心を分けて保つ
 
-Do not duplicate server data into a client store. Each concern has its own home.
+serverのデータをclient storeへ複製しない。関心ごとに置き場所を分ける。
 
-| Concern | Common choices |
+| 関心 | よくある選択肢 |
 |---------|------|
-| Server state (remote data) | a server-cache library (TanStack Query, SWR) |
-| Client/UI state | a lightweight store (Zustand, Jotai) or Context |
-| Route/navigation state | Expo Router params |
-| Form state | a form library (e.g. React Hook Form) + schema validation |
-| Secrets / tokens | `expo-secure-store` |
-| Non-secret persistence | `AsyncStorage` / MMKV |
+| server state（リモートデータ） | server cacheライブラリ（TanStack Query、SWR） |
+| client/UI state | 軽量store（Zustand、Jotai）またはContext |
+| route/navigation state | Expo Routerのparams |
+| form state | formライブラリ（React Hook Formなど）＋schema validation |
+| 秘密情報 / token | `expo-secure-store` |
+| 秘密でない永続化 | `AsyncStorage` / MMKV |
 
-Prefer local `useState` until state genuinely needs sharing.
+本当に共有が必要になるまではlocalの`useState`を優先する。
 
-### Data fetching: a cache library + Zod
+### data fetching: cacheライブラリ＋Zod
 
-Use a server-cache library (TanStack Query, SWR) instead of fetch-in-`useEffect`. Validate at the boundary and infer types from the schema. Handle loading, error, and empty states explicitly. (Example uses TanStack Query.)
+`useEffect`内でのfetchではなく、server cacheライブラリ（TanStack Query、SWR）を使う。境界で検証し、schemaから型を推論する。loading、error、emptyの各状態を明示的に扱う。（例はTanStack Queryを使う。）
 
 ```tsx
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -109,7 +109,7 @@ export function useUpdateEmail(id: string) {
 }
 ```
 
-### Lists: virtualize, never map a big array in a ScrollView
+### list: virtualizeする。ScrollView内で大きな配列をmapしない
 
 ```tsx
 import { FlatList } from 'react-native'
@@ -117,17 +117,17 @@ import { FlatList } from 'react-native'
 <FlatList
   data={items}
   keyExtractor={(item) => item.id}
-  renderItem={renderItem}          // memoized
+  renderItem={renderItem}          // memo化済み
   initialNumToRender={10}
   windowSize={5}
 />
 ```
 
-Use `FlashList` (Shopify) for large or heterogeneous lists.
+大きなlistや要素が不揃いなlistには`FlashList`（Shopify）を使う。
 
-### Styling: pick one system
+### styling: 方式を一つに決める
 
-`StyleSheet.create()` is the framework-native option; utility-class libraries (e.g. NativeWind) are a common alternative. Choose one and stay consistent. Never build style objects inline in JSX on hot paths.
+`StyleSheet.create()`はframework標準の選択肢で、utility classライブラリ（NativeWindなど）が一般的な代替になる。どちらか一つを選び、一貫させる。hot pathのJSX内でstyle objectをinlineで作らない。
 
 ```tsx
 // NativeWind
@@ -140,9 +140,9 @@ const styles = StyleSheet.create({ card: { padding: 16, borderRadius: 16, backgr
 <View style={styles.card}>...</View>
 ```
 
-### Native APIs: wrap in hooks, clean up effects
+### native API: hookで包み、effectをcleanupする
 
-Keep Expo SDK calls and subscriptions inside `use*` hooks, not in JSX. Always clean up.
+Expo SDKの呼び出しとsubscriptionはJSXではなく`use*` hookの中に置く。必ずcleanupする。
 
 ```tsx
 import { useEffect, useState } from 'react'
@@ -154,8 +154,8 @@ type LocationState =
   | { status: 'granted'; coords: Location.LocationObjectCoords }
 
 export function useCurrentLocation() {
-  // Track status, not just coords — so the UI can tell "still loading" apart
-  // from "permission denied" and show an actionable message.
+  // coordsだけでなくstatusも保持する。UIが「読み込み中」と
+  // 「権限が拒否された」を区別し、行動可能なメッセージを出せるようにする。
   const [state, setState] = useState<LocationState>({ status: 'loading' })
 
   useEffect(() => {
@@ -169,14 +169,14 @@ export function useCurrentLocation() {
       const pos = await Location.getCurrentPositionAsync({})
       if (active) setState({ status: 'granted', coords: pos.coords })
     })()
-    return () => { active = false }   // ignore stale result after unmount
+    return () => { active = false }   // unmount後の古い結果を無視する
   }, [])
 
   return state
 }
 ```
 
-### Secure storage for tokens
+### tokenのsecure storage
 
 ```tsx
 import * as SecureStore from 'expo-secure-store'
@@ -185,9 +185,9 @@ await SecureStore.setItemAsync('auth_token', token)   // Keychain / Keystore
 const token = await SecureStore.getItemAsync('auth_token')
 ```
 
-## Code Examples
+## コード例
 
-### A full screen: route → query → list → states
+### 画面全体: route → query → list → 状態
 
 ```tsx
 // app/(tabs)/orders.tsx
@@ -207,7 +207,7 @@ function useOrders() {
   })
 }
 
-// Memoized so its reference is stable across renders (see the lists guidance).
+// render間で参照を安定させるためmemo化する（listの指針を参照）。
 const OrderRow = memo(function OrderRow({ item }: { item: Order }) {
   return (
     <View className="px-4 py-3 border-b border-neutral-200">
@@ -237,7 +237,7 @@ export default function OrdersScreen() {
 }
 ```
 
-### A form: React Hook Form + Zod resolver
+### form: React Hook Form＋Zod resolver
 
 ```tsx
 import { useForm, Controller } from 'react-hook-form'
@@ -277,50 +277,50 @@ export function EmailForm({ onSubmit }: { onSubmit: (v: FormValues) => void }) {
 }
 ```
 
-## Anti-Patterns
+## アンチパターン
 
 ```tsx
-// WRONG: large array mapped inside a ScrollView (no virtualization, janky, high memory)
+// WRONG: ScrollView内で大きな配列をmapする（virtualizationなし、カクつき、メモリ大）
 <ScrollView>{items.map((i) => <Row key={i.id} item={i} />)}</ScrollView>
 // RIGHT: FlatList / FlashList
 
-// WRONG: server data copied into a client store (two sources of truth, stale data)
+// WRONG: serverデータをclient storeへ複製する（真実の源が二つ、データが古くなる）
 const useStore = create((set) => ({ users: [], setUsers: (u) => set({ users: u }) }))
 useEffect(() => { getUsers().then(setUsers) }, [])
-// RIGHT: useQuery owns server state; derive what you need
+// RIGHT: useQueryがserver stateを所有し、必要な値はそこから導出する
 
-// WRONG: tokens in AsyncStorage (not encrypted)
+// WRONG: tokenをAsyncStorageへ置く（暗号化されない）
 await AsyncStorage.setItem('auth_token', token)
 // RIGHT: expo-secure-store
 
-// WRONG: trusting deep-link params
+// WRONG: deep linkのparamsを信頼する
 const { id } = useLocalSearchParams(); fetchUser(id)
-// RIGHT: validate with Zod before use
+// RIGHT: 使う前にZodで検証する
 
-// WRONG: inline style object recreated every render on a hot path
+// WRONG: hot pathでrenderごとに再生成されるinline style object
 <View style={{ padding: 16, backgroundColor: '#fff' }} />
-// RIGHT: StyleSheet.create at module scope, or NativeWind className
+// RIGHT: module scopeでStyleSheet.create、またはNativeWindのclassName
 
-// WRONG: real secret shipped in the bundle
+// WRONG: 本物の秘密値をbundleへ同梱する
 const STRIPE_SECRET = 'sk_live_...'
-// RIGHT: keep privileged calls server-side; ship only public keys protected by backend rules
+// RIGHT: 特権的な呼び出しはserver側に置き、backendのルールで守られたpublic keyだけを配布する
 ```
 
-## Best Practices
+## ベストプラクティス
 
-- Keep route files thin; put logic in screen components and `use*` hooks.
-- Validate every external input (API responses, route params, push payloads) with Zod.
-- Let TanStack Query own server state; keep client stores small.
-- Always render loading, error, and empty states — never just a spinner with no fallback.
-- Virtualize lists; memoize `renderItem`; provide a stable `keyExtractor`.
-- Use `react-native-reanimated` for animation (UI thread); avoid heavy work on the JS thread.
-- Store tokens in `expo-secure-store`; never trust the client for authorization.
-- Respect safe areas, Dynamic Type, and accessibility roles/labels from the start.
-- Confirm New Architecture compatibility for every native dependency before release.
+- route fileは薄く保ち、ロジックはscreen componentと`use*` hookへ置く。
+- 外部入力（APIのresponse、route params、push payload）はすべてZodで検証する。
+- server stateはTanStack Queryに所有させ、client storeは小さく保つ。
+- loading、error、emptyの各状態を必ず描画する。fallbackのないspinnerだけで済ませない。
+- listをvirtualizeし、`renderItem`をmemo化し、安定した`keyExtractor`を渡す。
+- animationには`react-native-reanimated`（UI thread）を使い、JS threadでの重い処理を避ける。
+- tokenは`expo-secure-store`へ保存し、認可でclientを信頼しない。
+- safe area、Dynamic Type、accessibilityのrole/labelを最初から守る。
+- リリース前にすべてのnative依存についてNew Architecture互換性を確認する。
 
-## Related Skills
+## 関連skill
 
-- `frontend-patterns` — React/Next.js (web) patterns; useful for shared React concepts, but DOM-specific.
-- `coding-standards` — TypeScript/JavaScript idioms that apply to RN code.
-- `tdd-workflow`, `e2e-testing` — testing process (use Jest + React Native Testing Library, Maestro/Detox for RN).
-- `security-review` — general security checklist that complements the RN bundle/secret guidance above.
+- `frontend-patterns` — React/Next.js（web）のパターン。共通のReact概念には有用だが、DOM固有の内容を含む。
+- `coding-standards` — RNコードにも当てはまるTypeScript/JavaScriptの書き方。
+- `tdd-workflow`、`e2e-testing` — testのプロセス（RNではJest＋React Native Testing Library、Maestro/Detoxを使う）。
+- `security-review` — 上記のRNのbundle/秘密情報に関する指針を補完する一般的なセキュリティチェックリスト。

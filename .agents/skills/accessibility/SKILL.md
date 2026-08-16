@@ -1,60 +1,60 @@
 ---
 name: accessibility
-description: Design, implement, and audit inclusive digital products using WCAG 2.2 Level AA. Use when building or auditing UI that must meet WCAG 2.2 Level AA, or when reviewing a change for keyboard, contrast, or screen-reader support.
-  standards. Use this skill to generate semantic ARIA for Web and accessibility traits for Web and Native platforms (iOS/Android).
+description: WCAG 2.2 Level AAに基づいて包摂的なデジタルプロダクトを設計・実装・監査する。WCAG 2.2 Level AAを満たす必要のあるUIを実装・監査するとき、またはkeyboard、コントラスト、screen reader対応の観点で変更をレビューするときに使う。
+  このスキルはWeb向けのsemantic ARIAと、WebおよびNativeプラットフォーム（iOS/Android）向けのaccessibility traitを生成するために使う。
 metadata:
   origin: ECC
 ---
 
 # Accessibility (WCAG 2.2)
 
-This skill ensures that digital interfaces are Perceivable, Operable, Understandable, and Robust (POUR) for all users, including those using screen readers, switch controls, or keyboard navigation. It focuses on the technical implementation of WCAG 2.2 success criteria.
+このスキルは、screen reader、switch control、keyboard navigationを使う利用者を含むすべての人にとって、デジタルインターフェースが知覚可能・操作可能・理解可能・堅牢（POUR）であることを保証する。WCAG 2.2の達成基準の技術的な実装に焦点を当てる。
 
-## When to Use
+## いつ使うか
 
-- Defining UI component specifications for Web, iOS, or Android.
-- Auditing existing code for accessibility barriers or compliance gaps.
-- Implementing new WCAG 2.2 standards like Target Size (Minimum) and Focus Appearance.
-- Mapping high-level design requirements to technical attributes (ARIA roles, traits, hints).
+- Web、iOS、AndroidのUI componentの仕様を定義するとき。
+- 既存コードをaccessibilityの障壁や準拠のギャップの観点で監査するとき。
+- Target Size (Minimum)やFocus AppearanceといったWCAG 2.2の新しい基準を実装するとき。
+- 上位のdesign要件を技術的な属性（ARIA role、trait、hint）へ対応付けるとき。
 
-## Core Concepts
+## 中心となる概念
 
-- **POUR Principles**: The foundation of WCAG (Perceivable, Operable, Understandable, Robust).
-- **Semantic Mapping**: Using native elements over generic containers to provide built-in accessibility.
-- **Accessibility Tree**: The representation of the UI that assistive technologies actually "read."
-- **Focus Management**: Controlling the order and visibility of the keyboard/screen reader cursor.
-- **Labeling & Hints**: Providing context through `aria-label`, `accessibilityLabel`, and `contentDescription`.
+- **POUR原則**: WCAGの基礎（知覚可能、操作可能、理解可能、堅牢）。
+- **semanticな対応付け**: 汎用のcontainerではなくnative要素を使い、組み込みのaccessibilityを得る。
+- **accessibility tree**: 支援技術が実際に「読む」UIの表現。
+- **focus管理**: keyboard/screen readerのカーソルの順序と可視性を制御する。
+- **labelとhint**: `aria-label`、`accessibilityLabel`、`contentDescription`で文脈を与える。
 
-## How It Works
+## 仕組み
 
-### Step 1: Identify the Component Role
+### Step 1: componentのroleを特定する
 
-Determine the functional purpose (e.g., Is this a button, a link, or a tab?). Use the most semantic native element available before resorting to custom roles.
+機能上の目的を判断する（例: これはbutton、link、tabのどれか）。custom roleに頼る前に、利用できる最もsemanticなnative要素を使う。
 
-### Step 2: Define Perceivable Attributes
+### Step 2: 知覚可能な属性を定義する
 
-- Ensure text contrast meets **4.5:1** (normal) or **3:1** (large/UI).
-- Add text alternatives for non-text content (images, icons).
-- Implement responsive reflow (up to 400% zoom without loss of function).
+- テキストのコントラストが**4.5:1**（通常）または**3:1**（大きい文字/UI）を満たすようにする。
+- 非テキストコンテンツ（画像、icon）に代替テキストを追加する。
+- レスポンシブなreflowを実装する（400%までのzoomで機能を失わない）。
 
-### Step 3: Implement Operable Controls
+### Step 3: 操作可能なコントロールを実装する
 
-- Ensure a minimum **24x24 CSS pixel** target size (WCAG 2.2 SC 2.5.8).
-- Verify all interactive elements are reachable via keyboard and have a visible focus indicator (SC 2.4.11).
-- Provide single-pointer alternatives for dragging movements.
+- 最小**24x24 CSSピクセル**のtarget sizeを確保する（WCAG 2.2 SC 2.5.8）。
+- すべてのinteractiveな要素がkeyboardで到達でき、可視のfocus indicatorを持つことを確認する（SC 2.4.11）。
+- ドラッグ操作にはsingle pointerの代替手段を用意する。
 
-### Step 4: Ensure Understandable Logic
+### Step 4: 理解可能なロジックにする
 
-- Use consistent navigation patterns.
-- Provide descriptive error messages and suggestions for correction (SC 3.3.3).
-- Implement "Redundant Entry" (SC 3.3.7) to prevent asking for the same data twice.
+- 一貫したnavigationパターンを使う。
+- 説明的なエラーメッセージと修正案を提示する（SC 3.3.3）。
+- 同じdataを二度求めないよう「Redundant Entry」（SC 3.3.7）を実装する。
 
-### Step 5: Verify Robust Compatibility
+### Step 5: 堅牢な互換性を確認する
 
-- Use correct `Name, Role, Value` patterns.
-- Implement `aria-live` or live regions for dynamic status updates.
+- 正しい`Name, Role, Value`のパターンを使う。
+- 動的なステータス更新のために`aria-live`やlive regionを実装する。
 
-## Accessibility Architecture Diagram
+## accessibilityアーキテクチャ図
 
 ```mermaid
 flowchart TD
@@ -68,18 +68,18 @@ flowchart TD
   Compose --> AT
 ```
 
-## Cross-Platform Mapping
+## プラットフォーム横断の対応表
 
-| Feature            | Web (HTML/ARIA)          | iOS (SwiftUI)                        | Android (Compose)                                           |
+| 機能               | Web (HTML/ARIA)          | iOS (SwiftUI)                        | Android (Compose)                                           |
 | :----------------- | :----------------------- | :----------------------------------- | :---------------------------------------------------------- |
-| **Primary Label**  | `aria-label` / `<label>` | `.accessibilityLabel()`              | `contentDescription`                                        |
-| **Secondary Hint** | `aria-describedby`       | `.accessibilityHint()`               | `Modifier.semantics { stateDescription = ... }`             |
-| **Action Role**    | `role="button"`          | `.accessibilityAddTraits(.isButton)` | `Modifier.semantics { role = Role.Button }`                 |
-| **Live Updates**   | `aria-live="polite"`     | `.accessibilityLiveRegion(.polite)`  | `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` |
+| **主label**        | `aria-label` / `<label>` | `.accessibilityLabel()`              | `contentDescription`                                        |
+| **補助hint**       | `aria-describedby`       | `.accessibilityHint()`               | `Modifier.semantics { stateDescription = ... }`             |
+| **操作role**       | `role="button"`          | `.accessibilityAddTraits(.isButton)` | `Modifier.semantics { role = Role.Button }`                 |
+| **live更新**       | `aria-live="polite"`     | `.accessibilityLiveRegion(.polite)`  | `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` |
 
-## Examples
+## 例
 
-### Web: Accessible Search
+### Web: アクセシブルな検索
 
 ```html
 <form role="search">
@@ -91,7 +91,7 @@ flowchart TD
 </form>
 ```
 
-### iOS: Accessible Action Button
+### iOS: アクセシブルな操作button
 
 ```swift
 Button(action: deleteItem) {
@@ -102,7 +102,7 @@ Button(action: deleteItem) {
 .accessibilityAddTraits(.isButton)
 ```
 
-### Android: Accessible Toggle
+### Android: アクセシブルなtoggle
 
 ```kotlin
 Switch(
@@ -114,24 +114,24 @@ Switch(
 )
 ```
 
-## Anti-Patterns to Avoid
+## 避けるべきanti-pattern
 
-- **Div-Buttons**: Using a `<div>` or `<span>` for a click event without adding a role and keyboard support.
-- **Color-Only Meaning**: Indicating an error or status _only_ with a color change (e.g., turning a border red).
-- **Uncontained Modal Focus**: Modals that don't trap focus, allowing keyboard users to navigate background content while the modal is open. Focus must be contained _and_ escapable via the `Escape` key or an explicit close button (WCAG SC 2.1.2).
-- **Redundant Alt Text**: Using "Image of..." or "Picture of..." in alt text (screen readers already announce the role "Image").
+- **div button**: roleとkeyboard対応を付けずに`<div>`や`<span>`へclickイベントを付ける。
+- **色だけによる意味付け**: エラーや状態を色の変化_だけ_で示す（例: borderを赤くする）。
+- **閉じ込められていないmodalのfocus**: focusをtrapせず、modalが開いている間もkeyboard利用者が背後のコンテンツへ移動できる。focusは閉じ込められ、_かつ_`Escape`キーまたは明示的な閉じるbuttonで抜けられる必要がある（WCAG SC 2.1.2）。
+- **冗長なalt text**: alt textに「〜の画像」「〜の写真」と書く（screen readerは既にrole「画像」を読み上げる）。
 
-## Best Practices Checklist
+## ベストプラクティスのチェックリスト
 
-- [ ] Interactive elements meet the **24x24px** (Web) or **44x44pt** (Native) target size.
-- [ ] Focus indicators are clearly visible and high-contrast.
-- [ ] Modals **contain focus** while open, and release it cleanly on close (`Escape` key or close button).
-- [ ] Dropdowns and menus restore focus to the trigger element on close.
-- [ ] Forms provide text-based error suggestions.
-- [ ] All icon-only buttons have a descriptive text label.
-- [ ] Content reflows properly when text is scaled.
+- [ ] interactiveな要素が**24x24px**（Web）または**44x44pt**（Native）のtarget sizeを満たす。
+- [ ] focus indicatorが明確に見え、高コントラストである。
+- [ ] modalは開いている間**focusを閉じ込め**、閉じるときに適切に解放する（`Escape`キーまたは閉じるbutton）。
+- [ ] dropdownやmenuは閉じるときにtrigger要素へfocusを戻す。
+- [ ] formがテキストベースのエラー修正案を提示する。
+- [ ] iconのみのbuttonすべてに説明的なテキストlabelがある。
+- [ ] テキストを拡大したときコンテンツが適切にreflowする。
 
-## References
+## 参考資料
 
 - [WCAG 2.2 Guidelines](https://www.w3.org/TR/WCAG22/)
 - [WAI-ARIA Authoring Practices](https://www.w3.org/TR/wai-aria-practices/)
@@ -139,7 +139,7 @@ Switch(
 - [iOS Human Interface Guidelines - Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
 - [Android Accessibility Developer Guide](https://developer.android.com/guide/topics/ui/accessibility)
 
-## Related Skills
+## 関連スキル
 
 - `frontend-patterns`
 - `design-system`

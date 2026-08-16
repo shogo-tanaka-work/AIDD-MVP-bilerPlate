@@ -1,24 +1,24 @@
 ---
 name: swift-concurrency-6-2
-description: Swift 6.2 Approachable Concurrency — single-threaded by default, @concurrent for explicit background offloading, isolated conformances for main actor types. Use when adopting Swift 6.2 concurrency — offloading with @concurrent or resolving main-actor isolation.
+description: Swift 6.2のApproachable Concurrency — デフォルトでsingle-thread、明示的なbackground offloadingのための@concurrent、main actor型のためのisolated conformance。Swift 6.2のconcurrencyを採用するとき、@concurrentでoffloadingするとき、main actor isolationの問題を解決するときに使う。
 ---
 
 # Swift 6.2 Approachable Concurrency
 
-Patterns for adopting Swift 6.2's concurrency model where code runs single-threaded by default and concurrency is introduced explicitly. Eliminates common data-race errors without sacrificing performance.
+デフォルトでコードがsingle-threadで動作し、concurrencyを明示的に導入するSwift 6.2のconcurrencyモデルを採用するためのパターン。performanceを犠牲にせず、よくあるdata race errorを解消する。
 
-## When to Activate
+## いつ使うか
 
-- Migrating Swift 5.x or 6.0/6.1 projects to Swift 6.2
-- Resolving data-race safety compiler errors
-- Designing MainActor-based app architecture
-- Offloading CPU-intensive work to background threads
-- Implementing protocol conformances on MainActor-isolated types
-- Enabling Approachable Concurrency build settings in Xcode 26
+- Swift 5.xや6.0/6.1のプロジェクトをSwift 6.2へ移行するとき
+- data race safetyのcompiler errorを解決するとき
+- MainActorベースのアプリアーキテクチャを設計するとき
+- CPU負荷の高い処理をbackground threadへoffloadするとき
+- MainActorにisolateされた型でprotocol conformanceを実装するとき
+- Xcode 26でApproachable Concurrencyのbuild設定を有効にするとき
 
-## Core Problem: Implicit Background Offloading
+## 中心的な問題: 暗黙のbackground offloading
 
-In Swift 6.1 and earlier, async functions could be implicitly offloaded to background threads, causing data-race errors even in seemingly safe code:
+Swift 6.1以前では、async関数が暗黙的にbackground threadへoffloadされ、一見安全に見えるコードでもdata race errorが発生しうる。
 
 ```swift
 // Swift 6.1: ERROR
@@ -35,10 +35,10 @@ final class StickerModel {
 }
 ```
 
-Swift 6.2 fixes this: async functions stay on the calling actor by default.
+Swift 6.2はこれを修正した。async関数はデフォルトで呼び出し元のactorに留まる。
 
 ```swift
-// Swift 6.2: OK — async stays on MainActor, no data race
+// Swift 6.2: OK — asyncはMainActorに留まり、data raceは起きない
 @MainActor
 final class StickerModel {
     let photoProcessor = PhotoProcessor()
@@ -50,17 +50,17 @@ final class StickerModel {
 }
 ```
 
-## Core Pattern — Isolated Conformances
+## 中心的なパターン — isolated conformance
 
-MainActor types can now conform to non-isolated protocols safely:
+MainActorの型が、isolateされていないprotocolへ安全にconformできるようになった。
 
 ```swift
 protocol Exportable {
     func export()
 }
 
-// Swift 6.1: ERROR — crosses into main actor-isolated code
-// Swift 6.2: OK with isolated conformance
+// Swift 6.1: ERROR — main actorにisolateされたコードへ跨いでしまう
+// Swift 6.2: isolated conformanceでOK
 extension StickerModel: @MainActor Exportable {
     func export() {
         photoProcessor.exportAsPNG()
@@ -68,20 +68,20 @@ extension StickerModel: @MainActor Exportable {
 }
 ```
 
-The compiler ensures the conformance is only used on the main actor:
+compilerはconformanceがmain actor上でのみ使われることを保証する。
 
 ```swift
-// OK — ImageExporter is also @MainActor
+// OK — ImageExporterも@MainActor
 @MainActor
 struct ImageExporter {
     var items: [any Exportable]
 
     mutating func add(_ item: StickerModel) {
-        items.append(item)  // Safe: same actor isolation
+        items.append(item)  // 安全: 同じactor isolation
     }
 }
 
-// ERROR — nonisolated context can't use MainActor conformance
+// ERROR — nonisolatedなcontextではMainActor conformanceを使えない
 nonisolated struct ImageExporter {
     var items: [any Exportable]
 
@@ -91,52 +91,52 @@ nonisolated struct ImageExporter {
 }
 ```
 
-## Core Pattern — Global and Static Variables
+## 中心的なパターン — globalとstaticの変数
 
-Protect global/static state with MainActor:
+global/staticのstateをMainActorで保護する。
 
 ```swift
-// Swift 6.1: ERROR — non-Sendable type may have shared mutable state
+// Swift 6.1: ERROR — non-Sendableな型は共有可変stateを持ちうる
 final class StickerLibrary {
     static let shared: StickerLibrary = .init()  // Error
 }
 
-// Fix: Annotate with @MainActor
+// 修正: @MainActorを付ける
 @MainActor
 final class StickerLibrary {
     static let shared: StickerLibrary = .init()  // OK
 }
 ```
 
-### MainActor Default Inference Mode
+### MainActorのデフォルト推論モード
 
-Swift 6.2 introduces a mode where MainActor is inferred by default — no manual annotations needed:
+Swift 6.2はMainActorをデフォルトで推論するモードを導入した。手動の注釈は不要になる。
 
 ```swift
-// With MainActor default inference enabled:
+// MainActorのデフォルト推論を有効にした場合:
 final class StickerLibrary {
-    static let shared: StickerLibrary = .init()  // Implicitly @MainActor
+    static let shared: StickerLibrary = .init()  // 暗黙的に@MainActor
 }
 
 final class StickerModel {
     let photoProcessor: PhotoProcessor
-    var selection: [PhotosPickerItem]  // Implicitly @MainActor
+    var selection: [PhotosPickerItem]  // 暗黙的に@MainActor
 }
 
-extension StickerModel: Exportable {  // Implicitly @MainActor conformance
+extension StickerModel: Exportable {  // 暗黙的に@MainActor conformance
     func export() {
         photoProcessor.exportAsPNG()
     }
 }
 ```
 
-This mode is opt-in and recommended for apps, scripts, and other executable targets.
+このモードはopt-inであり、アプリ、スクリプト、その他の実行可能targetに推奨される。
 
-## Core Pattern — @concurrent for Background Work
+## 中心的なパターン — background処理のための@concurrent
 
-When you need actual parallelism, explicitly offload with `@concurrent`:
+実際の並列性が必要なときは、`@concurrent`で明示的にoffloadする。
 
-> **Important:** This example requires Approachable Concurrency build settings — SE-0466 (MainActor default isolation) and SE-0461 (NonisolatedNonsendingByDefault). With these enabled, `extractSticker` stays on the caller's actor, making mutable state access safe. **Without these settings, this code has a data race** — the compiler will flag it.
+> **重要:** この例はApproachable Concurrencyのbuild設定 — SE-0466（MainActorのデフォルトisolation）とSE-0461（NonisolatedNonsendingByDefault）を必要とする。これらを有効にすると`extractSticker`は呼び出し元のactorに留まり、可変stateへのアクセスが安全になる。**これらの設定がない場合、このコードにはdata raceがある** — compilerが検出する。
 
 ```swift
 nonisolated final class PhotoProcessor {
@@ -152,65 +152,65 @@ nonisolated final class PhotoProcessor {
         return sticker
     }
 
-    // Offload expensive work to concurrent thread pool
+    // 高コストな処理をconcurrent thread poolへoffloadする
     @concurrent
     static func extractSubject(from data: Data) async -> Sticker { /* ... */ }
 }
 
-// Callers must await
+// 呼び出し側はawaitが必要
 let processor = PhotoProcessor()
 processedPhotos[item.id] = await processor.extractSticker(data: data, with: item.id)
 ```
 
-To use `@concurrent`:
-1. Mark the containing type as `nonisolated`
-2. Add `@concurrent` to the function
-3. Add `async` if not already asynchronous
-4. Add `await` at call sites
+`@concurrent`を使う手順:
+1. 対象の型を`nonisolated`にする
+2. 関数へ`@concurrent`を付ける
+3. まだasyncでなければ`async`を付ける
+4. 呼び出し箇所へ`await`を付ける
 
-## Key Design Decisions
+## 主要な設計判断
 
-| Decision | Rationale |
+| 判断 | 根拠 |
 |----------|-----------|
-| Single-threaded by default | Most natural code is data-race free; concurrency is opt-in |
-| Async stays on calling actor | Eliminates implicit offloading that caused data-race errors |
-| Isolated conformances | MainActor types can conform to protocols without unsafe workarounds |
-| `@concurrent` explicit opt-in | Background execution is a deliberate performance choice, not accidental |
-| MainActor default inference | Reduces boilerplate `@MainActor` annotations for app targets |
-| Opt-in adoption | Non-breaking migration path — enable features incrementally |
+| デフォルトでsingle-thread | 自然に書いたコードの多くはdata race freeになり、concurrencyはopt-inになる |
+| asyncは呼び出し元のactorに留まる | data race errorの原因だった暗黙のoffloadingを解消する |
+| isolated conformance | MainActorの型が安全でない回避策なしにprotocolへconformできる |
+| `@concurrent`による明示的なopt-in | background実行を偶発的でなく意図的なperformance上の選択にする |
+| MainActorのデフォルト推論 | アプリtargetでの`@MainActor`注釈の定型を減らす |
+| opt-inでの採用 | 破壊的でない移行経路 — 機能を段階的に有効化できる |
 
-## Migration Steps
+## 移行手順
 
-1. **Enable in Xcode**: Swift Compiler > Concurrency section in Build Settings
-2. **Enable in SPM**: Use `SwiftSettings` API in package manifest
-3. **Use migration tooling**: Automatic code changes via swift.org/migration
-4. **Start with MainActor defaults**: Enable inference mode for app targets
-5. **Add `@concurrent` where needed**: Profile first, then offload hot paths
-6. **Test thoroughly**: Data-race issues become compile-time errors
+1. **Xcodeで有効化**: Build SettingsのSwift Compiler > Concurrencyセクション
+2. **SPMで有効化**: package manifestで`SwiftSettings` APIを使う
+3. **移行ツールを使う**: swift.org/migrationによる自動コード変更
+4. **MainActorのデフォルトから始める**: アプリtargetで推論モードを有効にする
+5. **必要な箇所へ`@concurrent`を追加する**: まずprofileし、hot pathをoffloadする
+6. **十分にテストする**: data raceの問題がcompile時のerrorになる
 
-## Best Practices
+## ベストプラクティス
 
-- **Start on MainActor** — write single-threaded code first, optimize later
-- **Use `@concurrent` only for CPU-intensive work** — image processing, compression, complex computation
-- **Enable MainActor inference mode** for app targets that are mostly single-threaded
-- **Profile before offloading** — use Instruments to find actual bottlenecks
-- **Protect globals with MainActor** — global/static mutable state needs actor isolation
-- **Use isolated conformances** instead of `nonisolated` workarounds or `@Sendable` wrappers
-- **Migrate incrementally** — enable features one at a time in build settings
+- **MainActorから始める** — まずsingle-threadで書き、後で最適化する
+- **`@concurrent`はCPU負荷の高い処理にだけ使う** — 画像処理、圧縮、複雑な計算
+- 主にsingle-threadなアプリtargetでは**MainActorの推論モードを有効にする**
+- **offloadの前にprofileする** — Instrumentsで実際のボトルネックを見つける
+- **globalをMainActorで保護する** — global/staticな可変stateにはactor isolationが必要
+- `nonisolated`の回避策や`@Sendable`のラッパーではなく**isolated conformanceを使う**
+- **段階的に移行する** — build設定で機能を一つずつ有効にする
 
-## Anti-Patterns to Avoid
+## 避けるべきanti-pattern
 
-- Applying `@concurrent` to every async function (most don't need background execution)
-- Using `nonisolated` to suppress compiler errors without understanding isolation
-- Keeping legacy `DispatchQueue` patterns when actors provide the same safety
-- Skipping `model.availability` checks in concurrency-related Foundation Models code
-- Fighting the compiler — if it reports a data race, the code has a real concurrency issue
-- Assuming all async code runs in the background (Swift 6.2 default: stays on calling actor)
+- すべてのasync関数へ`@concurrent`を付ける（大半はbackground実行を必要としない）
+- isolationを理解しないまま`nonisolated`でcompiler errorを抑え込む
+- actorが同じ安全性を提供するのに旧来の`DispatchQueue`パターンを残す
+- concurrency関連のFoundation Modelsコードで`model.availability`の確認を省く
+- compilerと戦う — data raceが報告されたなら、実際にconcurrencyの問題がある
+- すべてのasyncコードがbackgroundで動くと仮定する（Swift 6.2のデフォルトは呼び出し元のactorに留まる）
 
-## When to Use
+## 適用場面
 
-- All new Swift 6.2+ projects (Approachable Concurrency is the recommended default)
-- Migrating existing apps from Swift 5.x or 6.0/6.1 concurrency
-- Resolving data-race safety compiler errors during Xcode 26 adoption
-- Building MainActor-centric app architectures (most UI apps)
-- Performance optimization — offloading specific heavy computations to background
+- すべての新規Swift 6.2以降のプロジェクト（Approachable Concurrencyが推奨のデフォルト）
+- Swift 5.xや6.0/6.1のconcurrencyから既存アプリを移行するとき
+- Xcode 26採用時にdata race safetyのcompiler errorを解決するとき
+- MainActor中心のアプリアーキテクチャを構築するとき（大半のUIアプリ）
+- performance最適化 — 特定の重い計算をbackgroundへoffloadするとき

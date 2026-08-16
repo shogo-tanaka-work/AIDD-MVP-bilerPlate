@@ -1,26 +1,26 @@
 ---
 name: swift-actor-persistence
-description: Thread-safe data persistence in Swift using actors — in-memory cache with file-backed storage, eliminating data races by design. Use when persisting data in Swift and a data race or thread-safety problem needs designing out.
+description: Swift の actor によるthread-safeなデータ永続化 — in-memory cacheとfile-backed storageを組み合わせ、data raceを設計段階で排除する。Swiftでデータを永続化するとき、data raceやthread-safetyの問題を設計で解消したいときに使う。
 metadata:
   origin: ECC
 ---
 
-# Swift Actors for Thread-Safe Persistence
+# Swift Actors によるThread-Safeな永続化
 
-Patterns for building thread-safe data persistence layers using Swift actors. Combines in-memory caching with file-backed storage, leveraging the actor model to eliminate data races at compile time.
+Swift の actor を使ってthread-safeなデータ永続化層を構築するためのパターン。in-memory cacheとfile-backed storageを組み合わせ、actor modelによってdata raceをコンパイル時に排除する。
 
-## When to Activate
+## 発動タイミング
 
-- Building a data persistence layer in Swift 5.5+
-- Need thread-safe access to shared mutable state
-- Want to eliminate manual synchronization (locks, DispatchQueues)
-- Building offline-first apps with local storage
+- Swift 5.5+ でデータ永続化層を構築するとき
+- 共有可変状態へのthread-safeなアクセスが必要なとき
+- 手動の同期処理（lock、DispatchQueue）を排除したいとき
+- ローカルストレージを使うoffline-firstアプリを構築するとき
 
-## Core Pattern
+## 基本パターン
 
-### Actor-Based Repository
+### Actorベースの Repository
 
-The actor model guarantees serialized access — no data races, enforced by the compiler.
+actor modelは直列化されたアクセスを保証する。data raceは発生せず、コンパイラが強制する。
 
 ```swift
 public actor LocalRepository<T: Codable & Identifiable> where T.ID == String {
@@ -29,7 +29,7 @@ public actor LocalRepository<T: Codable & Identifiable> where T.ID == String {
 
     public init(directory: URL = .documentsDirectory, filename: String = "data.json") {
         self.fileURL = directory.appendingPathComponent(filename)
-        // Synchronous load during init (actor isolation not yet active)
+        // init中の同期ロード（actor isolationはまだ有効でない）
         self.cache = Self.loadSynchronously(from: fileURL)
     }
 
@@ -70,23 +70,23 @@ public actor LocalRepository<T: Codable & Identifiable> where T.ID == String {
 }
 ```
 
-### Usage
+### 使い方
 
-All calls are automatically async due to actor isolation:
+actor isolationにより、すべての呼び出しは自動的にasyncになる。
 
 ```swift
 let repository = LocalRepository<Question>()
 
-// Read — fast O(1) lookup from in-memory cache
+// 読み取り — in-memory cacheからのO(1)の高速lookup
 let question = await repository.find(by: "q-001")
 let allQuestions = await repository.loadAll()
 
-// Write — updates cache and persists to file atomically
+// 書き込み — cacheを更新し、atomicにファイルへ永続化する
 try await repository.save(newQuestion)
 try await repository.delete("q-001")
 ```
 
-### Combining with @Observable ViewModel
+### @Observable ViewModelとの組み合わせ
 
 ```swift
 @Observable
@@ -109,36 +109,36 @@ final class QuestionListViewModel {
 }
 ```
 
-## Key Design Decisions
+## 主要な設計判断
 
-| Decision | Rationale |
+| 判断 | 理由 |
 |----------|-----------|
-| Actor (not class + lock) | Compiler-enforced thread safety, no manual synchronization |
-| In-memory cache + file persistence | Fast reads from cache, durable writes to disk |
-| Synchronous init loading | Avoids async initialization complexity |
-| Dictionary keyed by ID | O(1) lookups by identifier |
-| Generic over `Codable & Identifiable` | Reusable across any model type |
-| Atomic file writes (`.atomic`) | Prevents partial writes on crash |
+| class + lockではなくactor | コンパイラが強制するthread safety、手動同期が不要 |
+| in-memory cache + file永続化 | cacheからの高速な読み取りとディスクへの永続的な書き込み |
+| initでの同期ロード | 非同期初期化の複雑さを避ける |
+| IDをキーとしたDictionary | 識別子によるO(1)のlookup |
+| `Codable & Identifiable` に対するgeneric | どのmodel型でも再利用できる |
+| atomicなファイル書き込み（`.atomic`） | クラッシュ時の部分書き込みを防ぐ |
 
-## Best Practices
+## ベストプラクティス
 
-- **Use `Sendable` types** for all data crossing actor boundaries
-- **Keep the actor's public API minimal** — only expose domain operations, not persistence details
-- **Use `.atomic` writes** to prevent data corruption if the app crashes mid-write
-- **Load synchronously in `init`** — async initializers add complexity with minimal benefit for local files
-- **Combine with `@Observable`** ViewModels for reactive UI updates
+- actor境界を越えるすべてのデータに **`Sendable` 型を使う**
+- **actorのpublic APIを最小限に保つ** — 永続化の詳細ではなくドメイン操作だけを公開する
+- 書き込み途中のクラッシュによるデータ破損を防ぐため **`.atomic` 書き込みを使う**
+- **`init` で同期的にロードする** — 非同期initializerはローカルファイルに対して利点が小さく複雑さだけ増える
+- リアクティブなUI更新のため **`@Observable`** ViewModelと組み合わせる
 
-## Anti-Patterns to Avoid
+## 避けるべきアンチパターン
 
-- Using `DispatchQueue` or `NSLock` instead of actors for new Swift concurrency code
-- Exposing the internal cache dictionary to external callers
-- Making the file URL configurable without validation
-- Forgetting that all actor method calls are `await` — callers must handle async context
-- Using `nonisolated` to bypass actor isolation (defeats the purpose)
+- 新しいSwift concurrencyのコードでactorではなく `DispatchQueue` や `NSLock` を使う
+- 内部のcache dictionaryを外部の呼び出し側へ公開する
+- 検証なしにファイルURLを設定可能にする
+- actorのメソッド呼び出しがすべて `await` であることを忘れる — 呼び出し側はasync contextを扱う必要がある
+- actor isolationを迂回するために `nonisolated` を使う（目的を損なう）
 
-## When to Use
+## 利用場面
 
-- Local data storage in iOS/macOS apps (user data, settings, cached content)
-- Offline-first architectures that sync to a server later
-- Any shared mutable state that multiple parts of the app access concurrently
-- Replacing legacy `DispatchQueue`-based thread safety with modern Swift concurrency
+- iOS/macOSアプリのローカルデータ保存（ユーザーデータ、設定、キャッシュ済みコンテンツ）
+- 後からサーバーへ同期するoffline-firstアーキテクチャ
+- アプリの複数箇所から並行アクセスされる共有可変状態
+- 旧来の `DispatchQueue` ベースのthread safetyを現代的なSwift concurrencyへ置き換える

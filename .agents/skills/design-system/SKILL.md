@@ -1,83 +1,83 @@
 ---
 name: design-system
-description: Use this skill to generate or audit design systems, check visual consistency, and review PRs that touch styling. Use when generating or auditing a design system, checking visual consistency, or reviewing a PR that touches styling.
+description: design systemの生成・監査、視覚的一貫性の確認、stylingに触れるPRのレビューにこのスキルを使う。design systemを生成・監査するとき、視覚的一貫性を確認するとき、stylingに触れるPRをレビューするときに使う。
 metadata:
   origin: ECC
 ---
 
-# Design System — Generate & Audit Visual Systems
+# Design System — 視覚システムの生成と監査
 
-## When to Use
+## いつ使うか
 
-- Starting a new project that needs a design system
-- Auditing an existing codebase for visual consistency
-- Before a redesign — understand what you have
-- When the UI looks "off" but you can't pinpoint why
-- Reviewing PRs that touch styling
+- design systemが必要な新しいプロジェクトを始めるとき
+- 既存のコードベースを視覚的一貫性の観点で監査するとき
+- redesignの前 — 現状を把握するとき
+- UIが「なんとなくおかしい」が原因を特定できないとき
+- stylingに触れるPRをレビューするとき
 
-## How It Works
+## 仕組み
 
-### Mode 1: Generate Design System
+### Mode 1: design systemの生成
 
-Analyzes your codebase and generates a cohesive design system:
-
-```
-1. Scan CSS/Tailwind/styled-components for existing patterns
-2. Extract: colors, typography, spacing, border-radius, shadows, breakpoints
-3. Research 3 competitor sites for inspiration (via browser MCP)
-4. Propose a design token set (JSON + CSS custom properties)
-5. Generate DESIGN.md with rationale for each decision
-6. Create an interactive HTML preview page (self-contained, no deps)
-```
-
-Output: `DESIGN.md` + `design-tokens.json` + `design-preview.html`
-
-### Mode 2: Visual Audit
-
-Scores your UI across 10 dimensions (0-10 each):
+コードベースを分析し、一貫したdesign systemを生成する。
 
 ```
-1. Color consistency — are you using your palette or random hex values?
-2. Typography hierarchy — clear h1 > h2 > h3 > body > caption?
-3. Spacing rhythm — consistent scale (4px/8px/16px) or arbitrary?
-4. Component consistency — do similar elements look similar?
-5. Responsive behavior — fluid or broken at breakpoints?
-6. Dark mode — complete or half-done?
-7. Animation — purposeful or gratuitous?
-8. Accessibility — contrast ratios, focus states, touch targets
-9. Information density — cluttered or clean?
-10. Polish — hover states, transitions, loading states, empty states
+1. CSS/Tailwind/styled-componentsをscanして既存パターンを把握する
+2. 抽出する: 色、typography、spacing、border-radius、shadow、breakpoint
+3. 参考として競合サイト3件をリサーチする（browser MCP経由）
+4. design token一式を提案する（JSON + CSS custom properties）
+5. 各判断の根拠を記したDESIGN.mdを生成する
+6. インタラクティブなHTMLプレビューページを作成する（self-contained、依存なし）
 ```
 
-Each dimension gets a score, specific examples, and a fix with exact file:line.
+出力: `DESIGN.md` + `design-tokens.json` + `design-preview.html`
 
-### Mode 3: AI Slop Detection
+### Mode 2: 視覚監査
 
-Identifies generic AI-generated design patterns:
+UIを10の観点で採点する（各0〜10）。
 
 ```
-- Gratuitous gradients on everything
-- Purple-to-blue defaults
-- "Glass morphism" cards with no purpose
-- Rounded corners on things that shouldn't be rounded
-- Excessive animations on scroll
-- Generic hero with centered text over stock gradient
-- Sans-serif font stack with no personality
+1. 色の一貫性 — palette を使っているか、それとも場当たりのhex値か
+2. typographyの階層 — h1 > h2 > h3 > body > captionが明確か
+3. spacingのリズム — 一貫したscale（4px/8px/16px）か、恣意的か
+4. componentの一貫性 — 似た要素は似て見えるか
+5. レスポンシブ挙動 — 流動的か、breakpointで崩れるか
+6. dark mode — 完全か、中途半端か
+7. animation — 目的があるか、無駄か
+8. accessibility — コントラスト比、focus state、タッチターゲット
+9. 情報密度 — 雑然としているか、整理されているか
+10. 仕上げ — hover state、transition、loading state、empty state
 ```
 
-## Examples
+各観点にスコア、具体例、file:line付きの修正案を付ける。
 
-**Generate for a SaaS app:**
+### Mode 3: AIスロップの検出
+
+AI生成にありがちな汎用的なdesignパターンを検出する。
+
+```
+- 何にでも無意味にgradientをかける
+- purple-to-blueのデフォルト配色
+- 目的のない「glass morphism」カード
+- 角丸にすべきでないものへの角丸
+- スクロール時の過剰なanimation
+- ストック風gradient上に中央寄せテキストを置いた汎用hero
+- 個性のないsans-serifのfont stack
+```
+
+## 例
+
+**SaaSアプリ向けに生成する:**
 ```
 /design-system generate --style minimal --palette earth-tones
 ```
 
-**Audit existing UI:**
+**既存UIを監査する:**
 ```
 /design-system audit --url http://localhost:3000 --pages / /pricing /docs
 ```
 
-**Check for AI slop:**
+**AIスロップを確認する:**
 ```
 /design-system slop-check
 ```
