@@ -10,6 +10,9 @@ dist/
 # Claude Code
 .claude/settings.local.json
 
+# AIDD boilerplate
+.agents/backups/
+
 # macOS
 .DS_Store
 .AppleDouble
