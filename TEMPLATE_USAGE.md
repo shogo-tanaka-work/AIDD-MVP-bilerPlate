@@ -3,22 +3,55 @@
 AI駆動開発（AIDD）でMVPを量産するためのテンプレートリポジトリ。
 特定のAIツールに依存しない構成になっており、Claude Code / Cursor / Copilot / Cline 等で利用できる。
 
-## クイックスタート
+## セットアップ（初回のみ）
 
-### 1. テンプレートから新規プロジェクトを作成
+ボイラープレートを clone し、`aidd` コマンドを PATH へ通す。
 
 ```bash
-# ワンコマンドで新規プロジェクトを作成（Git履歴なし）
-./init.sh my-new-app
-cd my-new-app
+git clone https://github.com/shogo-tanaka-work/AIDD-MVP-bilerPlate.git ~/開発/AIDD-MVP-bilerPlate
+chmod +x ~/開発/AIDD-MVP-bilerPlate/bin/aidd ~/開発/AIDD-MVP-bilerPlate/scripts/apply-project-harness.sh
+mkdir -p ~/bin && ln -sfn ~/開発/AIDD-MVP-bilerPlate/bin/aidd ~/bin/aidd
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
 ```
 
-> `init.sh` はボイラープレートのファイルをコピーし、Git履歴をリセットして
-> 新規リポジトリとして初期化します。テンプレート用ファイルも自動で削除されます。
-> GitHub に public リポジトリを作成し、プッシュまで自動で行います。
->
-> **前提:** `gh`（GitHub CLI）がインストール・認証済みであること。
-> 未認証の場合は先に `gh auth login` を実行してください。
+グローバルharness（`~/.agents`・`~/.claude`・`~/.codex`）を使う場合は、あわせて一度だけ実行する。
+
+```bash
+aidd apply-home
+```
+
+## クイックスタート
+
+### 1. プロジェクトへ適用する
+
+```bash
+cd ~/開発/my-new-app      # 空でも、作り始めた後でもよい
+aidd apply
+```
+
+技術profileが決まっていれば、対応するSkillとRuleも一緒に入る。
+
+```bash
+aidd apply --profile frontend
+aidd apply --list-profiles     # 利用可能なprofile一覧
+```
+
+> **既存ファイルは上書きしません。** 手で書いた `AGENTS.md` などはそのまま残り、
+> 差分があるものは「据え置き」として報告されます。`.gitignore` は不足行だけを追記します。
+> 内容だけ先に見たいときは `--dry-run` を付けてください。
+
+後日ボイラープレートを更新したら、同じコマンドで取り込める。
+
+```bash
+aidd apply --update       # 差分を .agents/backups/ へ退避してから更新
+```
+
+Gitリポジトリはプロジェクト側の判断で作る。
+
+```bash
+git init -b main && git add -A && git commit -m "init: AIDDボイラープレートを適用"
+gh repo create my-new-app --private --source=. --push
+```
 
 ### 2. GitHubリポジトリを設定する（5分）
 
@@ -81,6 +114,11 @@ my-app/
 │   └── ARCH.md                  ← アーキテクチャ決定記録
 ├── src/                         ← アプリ本体（SPEC.md のスタックで構成が決まる）
 ├── tests/                       ← テスト群（src/ と同じ階層構造）
+├── .agents/                     ← AIツール非依存の正本
+│   ├── rules/                   ← 共通ルールと技術profile
+│   ├── skills/                  ← 再利用可能なスキル群
+│   ├── memory/MEMORY.md         ← セッションをまたぐ継続情報（作業完了ごとに更新）
+│   └── hooks/                   ← フック処理の本体
 ├── .claude/
 │   ├── settings.json            ← 権限設定（Claude Code CLI 用ガードレール）
 │   ├── rules/                   ← 詳細ルール（コーディング規約・テスト・設計）

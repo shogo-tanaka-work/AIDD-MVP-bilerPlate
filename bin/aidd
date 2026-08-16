@@ -1,0 +1,63 @@
+#!/bin/bash
+set -euo pipefail
+
+# AIDDボイラープレートの入口。
+# ~/bin など PATH の通った場所へこのファイルをsymlinkして使う。
+#   ln -s "$PWD/bin/aidd" ~/bin/aidd
+
+resolve_self() {
+  local src="${BASH_SOURCE[0]}" dir
+  while [ -L "$src" ]; do
+    dir="$(cd -P "$(dirname "$src")" && pwd)"
+    src="$(readlink "$src")"
+    [[ "$src" != /* ]] && src="$dir/$src"
+  done
+  cd -P "$(dirname "$src")" && pwd
+}
+
+AIDD_ROOT="$(dirname "$(resolve_self)")"
+
+usage() {
+  cat <<EOF
+使い方: aidd <コマンド> [引数]
+
+コマンド:
+  apply [対象ディレクトリ] [オプション]
+        ボイラープレートをプロジェクトへ適用する。
+        空のディレクトリにも、作業を始めた後のディレクトリにも使える。
+        主なオプション: --profile <名前> / --update / --dry-run / --list-profiles
+
+  apply-home
+        ~/.agents・~/.claude・~/.codex へグローバルharnessを配置する（初回のみ）。
+
+  root
+        ボイラープレートの場所を表示する。
+
+  help
+        このヘルプを表示する。
+
+ボイラープレート: $AIDD_ROOT
+EOF
+}
+
+case "${1-help}" in
+  apply)
+    shift
+    exec bash "$AIDD_ROOT/scripts/apply-project-harness.sh" "$@"
+    ;;
+  apply-home)
+    shift
+    exec bash "$AIDD_ROOT/scripts/apply-home-harness.sh" "$@"
+    ;;
+  root)
+    echo "$AIDD_ROOT"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "不明なコマンド: $1" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

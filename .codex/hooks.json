@@ -1,0 +1,18 @@
+{
+  "description": "AIDD共通の秘密情報保護Hook",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/pre-tool-use.mjs\"",
+            "timeout": 5,
+            "statusMessage": "秘密情報へのアクセスを確認中"
+          }
+        ]
+      }
+    ]
+  }
+}

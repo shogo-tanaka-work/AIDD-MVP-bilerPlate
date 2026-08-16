@@ -1,0 +1,191 @@
+schema_version: 1
+template:
+  name: AIDD-MVP-bilerPlate
+  source_of_truth: .agents
+  distribution_policy: explicit-copy
+
+sources:
+  ecc:
+    repository: https://github.com/affaan-m/ECC
+    fork: https://github.com/shogo-tanaka-work/ECC
+    revision: c9de8f5b2b3a225bca9befa2b7700aa5e3a4d1b8
+    license: MIT
+    copyright: Affaan Mustafa
+  workout_habit_app:
+    repository: https://github.com/shogo-tanaka-work/workout-habit-app
+    revision: 9e23234e224763e961f42b58d29004715ad1e59e
+    license: MIT
+    use: rewritten-rules-only
+  posting_manager:
+    repository: https://github.com/shogo-tanaka-work/posting-manager
+    revision: c294b1092c5077846ad3c7edcf374a176f2c3197
+    license: private-no-repository-license
+    use: rewritten-rules-only
+
+layers:
+  canonical:
+    - .agents/skills
+    - .agents/rules
+    - .agents/memory
+    - .agents/hooks
+  adapters:
+    claude:
+      instructions: CLAUDE.md
+      skills: .claude/skills
+      rules: .claude/rules
+      agents: .claude/agents
+      settings: .claude/settings.json
+    codex:
+      instructions: AGENTS.md
+      skills: .agents/skills
+      agents: .codex/agents
+      hooks: .codex/hooks.json
+  home:
+    policy: global-only
+    canonical: ~/.agents
+    claude: ~/.claude
+    codex: ~/.codex
+    templates:
+      agents: .agents/home/AGENTS.md
+      claude: .agents/home/CLAUDE.md
+    apply_command: bash scripts/apply-home-harness.sh
+  project:
+    policy: idempotent-apply
+    apply_command: bash scripts/apply-project-harness.sh
+    entrypoint: bin/aidd
+    overwrite: never-without-update-flag
+    backup: .agents/backups/
+
+skills:
+  global:
+    - architecture-decision-records
+    - coding-standards
+    - error-handling
+    - git-workflow
+    - production-audit
+    - repo-scan
+    - security-review
+    - verification-loop
+    - workspace-surface-audit
+  project_base:
+    - api-design
+    - backend-patterns
+    - contract-first
+    - deployment-patterns
+    - e2e-testing
+    - tdd-workflow
+  profiles:
+    frontend:
+      - accessibility
+      - browser-qa
+      - design-system
+      - frontend-a11y
+      - frontend-design-direction
+      - frontend-patterns
+      - make-interfaces-feel-better
+      - nextjs-turbopack
+      - react-native-patterns
+      - react-patterns
+      - react-performance
+      - react-testing
+    django:
+      - django-celery
+      - django-patterns
+      - django-security
+      - django-tdd
+      - django-verification
+    search:
+      - exa-search
+    github:
+      - github-ops
+    google_workspace:
+      - google-workspace-ops
+    ios:
+      - ios-icon-gen
+      - swift-actor-persistence
+      - swift-concurrency-6-2
+      - swift-protocol-di-testing
+      - swiftui-patterns
+    sql:
+      - clickhouse-io
+      - database-migrations
+      - jpa-patterns
+      - mysql-patterns
+      - postgres-patterns
+      - prisma-patterns
+    quality:
+      - eval-harness
+      - security-scan
+      - strategic-compact
+
+rule_packs:
+  common:
+    scope: project-base
+    files:
+      - code-design.md
+      - error-handling.md
+      - security.md
+      - secrets.md
+      - verification.md
+  typescript:
+    scope: profile
+    files:
+      - profiles/typescript/coding-style.md
+      - profiles/typescript/patterns.md
+      - profiles/typescript/security.md
+      - profiles/typescript/testing.md
+  frontend:
+    scope: profile
+    files:
+      - profiles/frontend.md
+  cloudflare:
+    scope: profile
+    files:
+      - profiles/cloudflare.md
+  mobile_ios:
+    scope: profile
+    files:
+      - profiles/mobile-ios.md
+
+hooks:
+  policy: adapter-registration
+  source: .agents/hooks
+  ecc_raw_copy: false
+  rationale: ECC hooks depend on plugin runtime and helper scripts.
+
+agents:
+  roles:
+    - explorer
+    - code-reviewer
+    - security-auditor
+    - docs-researcher
+  canonical_responsibility: aidd.yml
+  claude_adapter: .claude/agents
+  codex_adapter: .codex/agents
+  policy: Provider固有のschemaと権限設定はadapterで分離し、役割だけを同期する。
+
+local_only:
+  - source: posting-manager
+    path: .agents/skills/vault-post-import
+  - source: posting-manager
+    path: .agents/memory
+  - source: workout-habit-app
+    path: .agents/memory
+  - source: workout-habit-app
+    path: .agents/rules/auth.md
+  - source: workout-habit-app
+    path: .agents/rules/project-structure.md
+
+updates:
+  ecc_to_boilerplate:
+    mode: review-and-cherry-pick-assets
+    require:
+      - revision-update
+      - license-review
+      - adapter-validation
+  project_to_boilerplate:
+    mode: promote-after-generalization
+    exclude:
+      - product-specific-memory
+      - credentials
+      - environment-specific-paths

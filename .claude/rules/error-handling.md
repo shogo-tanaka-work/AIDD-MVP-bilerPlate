@@ -1,0 +1,1 @@
+../../.agents/rules/error-handling.md

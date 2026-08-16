@@ -1,7 +1,7 @@
 ---
 name: security-auditor
-description: セキュリティ監査の専門エージェント。デプロイ前・認証周りの変更・外部API連携追加時に PROACTIVELY 使用する。
-model: haiku
+description: セキュリティ監査の専門エージェント。ユーザーまたは親エージェントから監査を依頼されたときに使用する。
+model: inherit
 tools: Read, Grep, Glob
 ---
 
@@ -13,6 +13,7 @@ tools: Read, Grep, Glob
 ### シークレット漏洩
 - APIキー・トークンがハードコードされていないか
 - console.log でシークレットが出力されていないか
+- `.env`、秘密鍵、credentialsファイルは読まず、ファイル名と参照コードだけを確認する
 
 ### 入力バリデーション
 - 外部からの入力がすべてバリデーションされているか
