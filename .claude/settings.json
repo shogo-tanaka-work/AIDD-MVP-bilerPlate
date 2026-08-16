@@ -9,10 +9,7 @@
       "Bash(git status)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
       "Bash(git checkout *)",
-      "Bash(git push *)",
       "Read",
       "Write",
       "Edit",
@@ -28,7 +25,25 @@
       "Bash(git push --force *)",
       "Read(./.env)",
       "Read(./.env.*)",
-      "Read(./.env.local)"
+      "Read(./.env.local)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/*.{key,pem,p12,pfx})",
+      "Read(./**/credentials.json)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Write|Edit|MultiEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/pre-tool-use.mjs\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

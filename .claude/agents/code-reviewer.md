@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
-description: コードレビューの専門エージェント。PRレビュー・バグ確認・実装のバリデーション時に PROACTIVELY 使用する。
-model: haiku
+description: コードレビューの専門エージェント。ユーザーまたは親エージェントからレビューを依頼されたときに使用する。
+model: inherit
 tools: Read, Grep, Glob
 ---
 
@@ -22,7 +22,7 @@ tools: Read, Grep, Glob
 
 ### テスト
 - 正常系・異常系の両方がカバーされているか
-- カバレッジが 80% 以上か
+- 変更のリスクに対応する回帰テストがあるか
 
 ### セキュリティ
 - 環境変数がハードコードされていないか
