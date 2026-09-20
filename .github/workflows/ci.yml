@@ -12,14 +12,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup（スタックに応じて書き換える）
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '24'
 
-      - run: npm ci
-      - run: npm run typecheck   # TypeScript 以外は削除
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
+      - name: Verify AIDD harness
+        if: hashFiles('scripts/verify-harness.mjs') != ''
+        run: |
+          node scripts/verify-harness.mjs .
+          for file in bin/aidd scripts/*.sh; do bash -n "$file"; done
+          for file in scripts/*.mjs; do node --check "$file"; done
+          node --test --experimental-test-coverage --test-coverage-lines=80 tests/*.test.mjs
+
+      - name: Install application dependencies
+        if: hashFiles('scripts/verify-harness.mjs') == '' && hashFiles('package-lock.json') != ''
+        run: npm ci
+
+      - name: Verify application
+        if: hashFiles('scripts/verify-harness.mjs') == '' && hashFiles('package-lock.json') != ''
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+          npm run build
+
+      - name: Require CI configuration
+        if: hashFiles('scripts/verify-harness.mjs') == '' && hashFiles('package-lock.json') == ''
+        run: |
+          echo 'package-lock.jsonがありません。採用スタックに合わせてCIを設定してください。' >&2
+          exit 1

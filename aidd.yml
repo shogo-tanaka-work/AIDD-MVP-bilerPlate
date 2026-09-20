@@ -58,6 +58,7 @@ layers:
       skills: .agents/skills
       agents: .codex/agents
       hooks: .codex/hooks.json
+      rules: .codex/rules
   home:
     policy: global-only
     canonical: ~/.agents
@@ -152,25 +153,22 @@ rule_packs:
       - security.md
       - secrets.md
       - verification.md
-  typescript:
-    scope: profile
-    files:
+  profiles:
+    frontend:
+      - profiles/frontend.md
       - profiles/typescript/coding-style.md
       - profiles/typescript/patterns.md
       - profiles/typescript/security.md
       - profiles/typescript/testing.md
-  frontend:
-    scope: profile
-    files:
-      - profiles/frontend.md
-  cloudflare:
-    scope: profile
-    files:
-      - profiles/cloudflare.md
-  mobile_ios:
-    scope: profile
-    files:
+    django: []
+    search: []
+    github: []
+    google_workspace: []
+    ios:
       - profiles/mobile-ios.md
+    sql: []
+    quality: []
+    business: []
 
 hooks:
   policy: adapter-registration

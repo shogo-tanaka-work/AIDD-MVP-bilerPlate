@@ -1,0 +1,62 @@
+# Codex execpolicy is experimental. These rules complement sandbox and Hooks.
+# Destructive commands require a human decision even when a shell wrapper is used.
+
+prefix_rule(
+    pattern = ["rm"],
+    decision = "prompt",
+    justification = "Prefer a recoverable operation and confirm the exact target.",
+)
+
+prefix_rule(
+    pattern = ["chmod"],
+    decision = "prompt",
+    justification = "Permission changes require an explicit review.",
+)
+
+prefix_rule(
+    pattern = ["git", "reset"],
+    decision = "prompt",
+    justification = "Git history or worktree changes require an explicit review.",
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "prompt",
+    justification = "Untracked file deletion requires an explicit review.",
+)
+
+prefix_rule(
+    pattern = ["git", "checkout"],
+    decision = "prompt",
+    justification = "Checkout may overwrite worktree changes.",
+)
+
+prefix_rule(
+    pattern = ["git", "restore"],
+    decision = "prompt",
+    justification = "Restore may overwrite worktree changes.",
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Remote changes require human confirmation.",
+)
+
+prefix_rule(
+    pattern = ["terraform", "destroy"],
+    decision = "prompt",
+    justification = "Infrastructure teardown requires an explicit review.",
+)
+
+prefix_rule(
+    pattern = ["kubectl", "delete"],
+    decision = "prompt",
+    justification = "Cluster resource deletion requires an explicit review.",
+)
+
+prefix_rule(
+    pattern = ["sudo"],
+    decision = "forbidden",
+    justification = "Do not escalate privileges from an agent session.",
+)

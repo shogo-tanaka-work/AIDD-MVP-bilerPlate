@@ -27,8 +27,14 @@ usage() {
         空のディレクトリにも、作業を始めた後のディレクトリにも使える。
         主なオプション: --profile <名前> / --update / --dry-run / --list-profiles
 
-  apply-home
-        ~/.agents・~/.claude・~/.codex へグローバルharnessを配置する（初回のみ）。
+  apply-home [--update] [--yes] [--dry-run]
+        ~/.agents・~/.claude・~/.codex へグローバルharnessを配置・更新する。
+
+  verify [対象ディレクトリ] [--format text|json]
+        Skill・Rule・Hook・Subagent・adapterの整合性を検査する。
+
+  restore <backupディレクトリ> [対象ディレクトリ] [--yes]
+        backup manifestを検証し、update前の状態へ復元する。
 
   root
         ボイラープレートの場所を表示する。
@@ -48,6 +54,15 @@ case "${1-help}" in
   apply-home)
     shift
     exec bash "$AIDD_ROOT/scripts/apply-home-harness.sh" "$@"
+    ;;
+  verify)
+    shift
+    [ "$#" -gt 0 ] || set -- "$PWD"
+    exec node "$AIDD_ROOT/scripts/verify-harness.mjs" "$@"
+    ;;
+  restore)
+    shift
+    exec node "$AIDD_ROOT/scripts/restore-harness.mjs" "$@"
     ;;
   root)
     echo "$AIDD_ROOT"

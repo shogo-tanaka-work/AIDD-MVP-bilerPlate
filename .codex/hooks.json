@@ -7,9 +7,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/pre-tool-use.mjs\"",
+            "command": "AIDD_HOOK_ROOT=\"$PWD\"; while [ \"$AIDD_HOOK_ROOT\" != / ] && { [ ! -f \"$AIDD_HOOK_ROOT/.codex/hooks.json\" ] || [ ! -f \"$AIDD_HOOK_ROOT/.agents/hooks/pre-tool-use.mjs\" ]; }; do AIDD_HOOK_ROOT=\"$(dirname \"$AIDD_HOOK_ROOT\")\"; done; if [ ! -f \"$AIDD_HOOK_ROOT/.agents/hooks/pre-tool-use.mjs\" ]; then echo 'AIDD Hook rootを解決できません' >&2; exit 2; fi; node \"$AIDD_HOOK_ROOT/.agents/hooks/pre-tool-use.mjs\"",
             "timeout": 5,
-            "statusMessage": "秘密情報へのアクセスを確認中"
+            "statusMessage": "危険操作と秘密情報へのアクセスを確認中"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AIDD_HOOK_ROOT=\"$PWD\"; while [ \"$AIDD_HOOK_ROOT\" != / ] && { [ ! -f \"$AIDD_HOOK_ROOT/.codex/hooks.json\" ] || [ ! -f \"$AIDD_HOOK_ROOT/.agents/hooks/post-tool-use.mjs\" ]; }; do AIDD_HOOK_ROOT=\"$(dirname \"$AIDD_HOOK_ROOT\")\"; done; if [ ! -f \"$AIDD_HOOK_ROOT/.agents/hooks/post-tool-use.mjs\" ]; then echo 'AIDD Hook rootを解決できないためpost-edit検証を省略しました' >&2; exit 0; fi; AIDD_PROJECT_DIR=\"$AIDD_HOOK_ROOT\" node \"$AIDD_HOOK_ROOT/.agents/hooks/post-tool-use.mjs\"",
+            "timeout": 60,
+            "statusMessage": "編集後の軽量検証を実行中"
           }
         ]
       }
