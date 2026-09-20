@@ -320,7 +320,7 @@ const STRIPE_SECRET = 'sk_live_...'
 
 ## 関連skill
 
-- `frontend-patterns` — React/Next.js（web）のパターン。共通のReact概念には有用だが、DOM固有の内容を含む。
+- `vercel-react-best-practices`、`vercel-composition-patterns` — React/Next.js（web）のパターン。共通のReact概念には有用だが、DOM固有の内容を含む。
 - `coding-standards` — RNコードにも当てはまるTypeScript/JavaScriptの書き方。
 - `tdd-workflow`、`e2e-testing` — testのプロセス（RNではJest＋React Native Testing Library、Maestro/Detoxを使う）。
 - `security-review` — 上記のRNのbundle/秘密情報に関する指針を補完する一般的なセキュリティチェックリスト。

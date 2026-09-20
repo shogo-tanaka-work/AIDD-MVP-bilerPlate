@@ -11,6 +11,24 @@ sources:
     revision: c9de8f5b2b3a225bca9befa2b7700aa5e3a4d1b8
     license: MIT
     copyright: Affaan Mustafa
+  anthropics_skills:
+    repository: https://github.com/anthropics/skills
+    revision: 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f
+    license: Apache-2.0
+    copyright: Anthropic, PBC
+    use: verbatim-english
+    skills:
+      - frontend-design
+  vercel_agent_skills:
+    repository: https://github.com/vercel-labs/agent-skills
+    revision: 063bee94c3f4df8453406c830b0a7df0f2860278
+    license: MIT (declared in SKILL.md frontmatter; see .agents/licenses/VERCEL-AGENT-SKILLS-LICENSE)
+    copyright: Vercel, Inc.
+    use: verbatim-english
+    skills:
+      - vercel-react-best-practices
+      - vercel-composition-patterns
+      - web-design-guidelines
   workout_habit_app:
     repository: https://github.com/shogo-tanaka-work/workout-habit-app
     revision: 9e23234e224763e961f42b58d29004715ad1e59e
@@ -62,10 +80,13 @@ skills:
     - coding-standards
     - error-handling
     - git-workflow
+    - graph-engineering
+    - harness-engineering
+    - loop-engineering
+    - plan-interview
     - production-audit
     - repo-scan
     - security-review
-    - verification-loop
     - workspace-surface-audit
   project_base:
     - api-design
@@ -80,14 +101,14 @@ skills:
       - browser-qa
       - design-system
       - frontend-a11y
-      - frontend-design-direction
-      - frontend-patterns
+      - frontend-design
       - make-interfaces-feel-better
       - nextjs-turbopack
       - react-native-patterns
-      - react-patterns
-      - react-performance
       - react-testing
+      - vercel-composition-patterns
+      - vercel-react-best-practices
+      - web-design-guidelines
     django:
       - django-celery
       - django-patterns
@@ -117,6 +138,10 @@ skills:
       - eval-harness
       - security-scan
       - strategic-compact
+    business:
+      - expense-classification
+      - marketing-content
+      - sales-proposal
 
 rule_packs:
   common:

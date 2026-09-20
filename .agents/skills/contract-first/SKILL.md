@@ -274,5 +274,5 @@ return databaseRow as unknown as OrderSummary;
 - `api-design` - リソース、response、error、pagination、versioningの設計
 - `ai-regression-testing` - responseの形と経路のずれに対するregression test
 - `backend-patterns` - provider側のAPIとservice architecture
-- `frontend-patterns` - consumer側のデータアクセスとUI統合
+- `vercel-react-best-practices` - consumer側のデータアクセスとUI統合
 - `tdd-workflow` - test-firstの実装規律

@@ -1,0 +1,12 @@
+vercel-labs/agent-skills 由来の skill について
+
+対象: .agents/skills/vercel-react-best-practices, vercel-composition-patterns, web-design-guidelines
+出典: https://github.com/vercel-labs/agent-skills
+取得 revision: 063bee94c3f4df8453406c830b0a7df0f2860278
+
+上記リポジトリは README の「License」節で MIT を宣言し、各 SKILL.md の frontmatter でも
+`license: MIT`（web-design-guidelines は frontmatter に license 記載なし）としているが、
+取得時点のリポジトリには LICENSE ファイル（著作権表示と許諾文の全文）が含まれていない。
+そのため本ファイルでは全文を転記せず、宣言内容と出典を記録する。
+
+再配布・改変時は上記出典を明記し、上流に LICENSE ファイルが追加された場合はその全文へ差し替える。

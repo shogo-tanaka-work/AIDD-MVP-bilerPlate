@@ -141,7 +141,7 @@ Switch(
 
 ## 関連スキル
 
-- `frontend-patterns`
+- `web-design-guidelines`
 - `design-system`
 - `liquid-glass-design`
 - `swiftui-patterns`
