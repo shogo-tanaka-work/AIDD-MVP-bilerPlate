@@ -81,7 +81,7 @@ gh repo create my-new-app --private --source=. --push
 #### Claude Code（CLI）の場合
 
 ```
-docs/SPEC.md と CLAUDE.md を読んでください。
+docs/SPEC.md と AGENTS.md を読んでください。
 読み終えたら、まずプランモードで以下を確認してください：
 1. 実装する機能の一覧と順序
 2. 必要なファイルの構成
@@ -98,17 +98,17 @@ docs/SPEC.md と CLAUDE.md を読んでください。
 
 #### Cursor / Copilot / Cline 等の場合
 
-1. `CLAUDE.md` をそのツールのルールファイルとして読み込ませる
-   - Cursor: `.cursorrules` にコピーまたはシンボリックリンク
-   - その他: プロジェクトルールとして指定
-2. `docs/SPEC.md` と `CLAUDE.md` を読ませてから実装を指示する
-3. `.claude/rules/` 配下のルールも適宜参照させる
+1. `AGENTS.md` をそのツールのルールファイルとして読み込ませる
+   - AGENTS.md を直接読むツールはそのまま使える
+   - その他: プロジェクトルールとして指定するか、ルールファイルへコピーまたはシンボリックリンク
+2. `docs/SPEC.md` と `AGENTS.md` を読ませてから実装を指示する
+3. `.agents/rules/` 配下のルールも適宜参照させる
 
 ## テンプレートの構成
 
 ```
 my-app/
-├── CLAUDE.md                    ← AIエージェントへの実装ルール
+├── AGENTS.md                    ← AIエージェントへの実装ルール（Claude Code / Codex 共通）
 ├── docs/
 │   ├── SPEC.md                  ← 1枚もの仕様（技術スタックもここで決める）
 │   └── ARCH.md                  ← アーキテクチャ決定記録
@@ -158,7 +158,7 @@ PR作成 → CI通過 → 人間がレビュー → マージ
 | ファイル | いつ変更するか |
 |---|---|
 | `docs/SPEC.md` | プロジェクト開始時に必ず書く |
-| `CLAUDE.md` の基本コマンド欄 | スタック確定後に書き換え |
-| `.claude/rules/` | スタック固有のルール追加時 |
+| `AGENTS.md` の基本コマンド欄 | スタック確定後に書き換え |
+| `.agents/rules/` | スタック固有のルール追加時 |
 | `.claude/settings.json` の allow | Python/Rust 等のコマンド追加時 |
 | `.github/workflows/` | スタックに応じてセットアップ手順を変更 |

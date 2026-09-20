@@ -48,7 +48,7 @@ layers:
     - .agents/hooks
   adapters:
     claude:
-      instructions: CLAUDE.md
+      instructions: AGENTS.md
       skills: .claude/skills
       rules: .claude/rules
       agents: .claude/agents

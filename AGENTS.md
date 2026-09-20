@@ -55,5 +55,6 @@
 - Rules: `.agents/rules/*.md` と `.agents/rules/profiles/`
 - Hooks正本: `.agents/hooks/`（登録は`.claude/`・`.codex/`で個別に行う）
 - Subagents: `.claude/agents/` と `.codex/agents/`（各AIの定義形式に分離する）
+- Claude Code adapter: `.claude/skills`と`.claude/rules`は`.agents/`へのsymlink。permissionsとHook登録は`.claude/settings.json`に置く。この`AGENTS.md`をClaude Codeが直接読むため、`CLAUDE.md`は置かない
 
 技術profileは採用したものだけ参照する。プロジェクト固有の数値目標・パス・運用判断は共通資産へ混ぜず、`docs/`または`.agents/memory/`へ置く。
