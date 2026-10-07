@@ -29,13 +29,15 @@ const editInput = filePath => ({
   tool_input: { file_path: filePath, old_string: 'a', new_string: 'b' },
 });
 
-const runHook = (root, input) =>
-  spawnSync(process.execPath, [hookPath], {
+const runHook = (root, input, validateEnv = { AIDD_POST_EDIT_VALIDATE: '1' }) => {
+  const { AIDD_POST_EDIT_VALIDATE: _inherited, ...baseEnv } = process.env;
+  return spawnSync(process.execPath, [hookPath], {
     cwd: root,
     encoding: 'utf8',
     input: typeof input === 'string' ? input : JSON.stringify(input),
-    env: { ...process.env, AIDD_PROJECT_DIR: root, AIDD_POST_EDIT_VALIDATE: '1' },
+    env: { ...baseEnv, AIDD_PROJECT_DIR: root, ...validateEnv },
   });
+};
 
 test('Edit / Write / apply_patchの変更pathを抽出する', () => {
   assert.deepEqual(changedPaths(editInput('src/a.ts')), ['src/a.ts']);
@@ -46,24 +48,33 @@ test('Edit / Write / apply_patchの変更pathを抽出する', () => {
   assert.deepEqual(changedPaths(null), []);
 });
 
-test('scriptファイルの変更でpackage.jsonのlintとtypecheckを予定する', async () => {
+test('opt-in時はscriptファイルの変更でpackage.jsonのlintとtypecheckを予定する', async () => {
   await withProject({ 'package.json': JSON.stringify({ scripts: { lint: 'true', typecheck: 'true', test: 'true' } }) }, root => {
-    const { checks } = planChecks({ root, paths: ['src/a.ts'], env: {} });
+    const { checks } = planChecks({ root, paths: ['src/a.ts'], env: { AIDD_POST_EDIT_VALIDATE: '1' } });
     assert.deepEqual(checks, [['npm', 'run', 'lint'], ['npm', 'run', 'typecheck']]);
   });
 });
 
 test('lockfileからpackage managerを選ぶ', async () => {
   await withProject({ 'package.json': JSON.stringify({ scripts: { lint: 'true' } }), 'pnpm-lock.yaml': '' }, root => {
-    const { checks } = planChecks({ root, paths: ['src/a.tsx'], env: {} });
+    const { checks } = planChecks({ root, paths: ['src/a.tsx'], env: { AIDD_POST_EDIT_VALIDATE: '1' } });
     assert.deepEqual(checks, [['pnpm', 'run', 'lint']]);
   });
 });
 
 test('Markdownなど対象外の変更では何も実行しない', async () => {
   await withProject({ 'package.json': JSON.stringify({ scripts: { lint: 'true' } }) }, root => {
-    const { checks } = planChecks({ root, paths: ['docs/readme.md'], env: {} });
+    const { checks } = planChecks({ root, paths: ['docs/readme.md'], env: { AIDD_POST_EDIT_VALIDATE: '1' } });
     assert.deepEqual(checks, []);
+  });
+});
+
+test('既定ではpackage.jsonのscriptを実行しない（permissionsを迂回して任意コードを動かさない）', async () => {
+  await withProject({ 'package.json': JSON.stringify({ scripts: { lint: 'true', typecheck: 'true' } }) }, root => {
+    assert.deepEqual(planChecks({ root, paths: ['src/a.ts'], env: {} }).checks, []);
+    const result = runHook(root, editInput('src/a.ts'), {});
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, '');
   });
 });
 
@@ -77,13 +88,13 @@ test('環境変数で無効化できる', async () => {
 test('Pythonプロジェクトでは変更ファイルの構文チェックだけを予定する', async () => {
   await withProject({ 'pyproject.toml': '' }, root => {
     const { checks } = planChecks({ root, paths: ['app/main.py'], env: {} });
-    assert.deepEqual(checks, [['python3', '-m', 'compileall', '-q', 'app/main.py']]);
+    assert.deepEqual(checks, [['python3', '-m', 'compileall', '-q', '--', 'app/main.py']]);
   });
 });
 
 test('壊れたpackage.jsonは省略理由を残して検証を予定しない', async () => {
   await withProject({ 'package.json': '{' }, root => {
-    const { checks, notes } = planChecks({ root, paths: ['src/a.ts'], env: {} });
+    const { checks, notes } = planChecks({ root, paths: ['src/a.ts'], env: { AIDD_POST_EDIT_VALIDATE: '1' } });
     assert.deepEqual(checks, []);
     assert.equal(notes.length, 1);
     assert.match(notes[0], /package\.json/);

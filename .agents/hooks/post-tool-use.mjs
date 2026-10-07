@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
-// 編集直後の軽量検証。package.jsonのlint / typecheck、Pythonの構文チェックだけを
+// 編集直後の軽量検証。Pythonの構文チェックと、opt-in時だけpackage.jsonのlint / typecheckを
 // 上限付きで実行し、失敗をエージェントへ返す。full test suiteは回さない。
-// 無効化: AIDD_POST_EDIT_VALIDATE=0
+// AIDD_POST_EDIT_VALIDATE: 未設定=Pythonのみ / 1=lint・typecheckも実行 / 0=すべて無効
+//
+// lint / typecheckはpackage.jsonや設定・script経由で任意コードを実行できる。Hookは人の許可なしに走るため、
+// エージェントが書き換えたコードをpermissionsを迂回して実行しないよう、既定では実行しない。
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -50,8 +53,12 @@ export const changedPaths = input => {
   return [...direct, ...patches.flatMap(extractPatchPaths)];
 };
 
-const isDisabled = env =>
-  ['0', 'false', 'no', 'off'].includes(String(env.AIDD_POST_EDIT_VALIDATE ?? '1').toLowerCase());
+const validateMode = env => {
+  const value = String(env.AIDD_POST_EDIT_VALIDATE ?? '').toLowerCase();
+  if (['0', 'false', 'no', 'off'].includes(value)) return 'off';
+  if (['1', 'true', 'yes', 'on'].includes(value)) return 'all';
+  return 'safe';
+};
 
 const packageManager = root => {
   if (existsSync(path.join(root, 'pnpm-lock.yaml'))) return 'pnpm';
@@ -75,12 +82,13 @@ const readPackageScripts = root => {
 
 // 実行する検証コマンドを決める純粋関数。副作用はファイル存在確認とpackage.json読み込みだけ。
 export const planChecks = ({ root, paths, env = process.env }) => {
-  if (isDisabled(env)) return { checks: [], notes: [] };
+  const mode = validateMode(env);
+  if (mode === 'off') return { checks: [], notes: [] };
 
   const checks = [];
   const notes = [];
 
-  if (paths.some(target => SCRIPT_FILE.test(target))) {
+  if (mode === 'all' && paths.some(target => SCRIPT_FILE.test(target))) {
     const { scripts, note } = readPackageScripts(root);
     if (note) notes.push(note);
     const manager = packageManager(root);
@@ -91,7 +99,8 @@ export const planChecks = ({ root, paths, env = process.env }) => {
 
   const pythonFiles = paths.filter(target => PYTHON_FILE.test(target));
   if (pythonFiles.length > 0 && existsSync(path.join(root, 'pyproject.toml'))) {
-    checks.push(['python3', '-m', 'compileall', '-q', ...pythonFiles]);
+    // `-`始まりのpathをoptionとして解釈させない。
+    checks.push(['python3', '-m', 'compileall', '-q', '--', ...pythonFiles]);
   }
 
   return { checks: checks.slice(0, MAX_CHECKS), notes };

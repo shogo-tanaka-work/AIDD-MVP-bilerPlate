@@ -14,19 +14,25 @@ jobs:
   claude:
     runs-on: ubuntu-latest
     # bot の無限ループ防止（必須）
+    # 起動者をリポジトリ関係者に限る。action 内の write 権限チェックより前に
+    # npm ci（PR の install script）が走るため、job 条件で先に止める。
+    # issues の labeled はラベル付与に triage 権限が要るため作成者では絞らない。
     if: |
       github.actor != 'claude[bot]' &&
       github.actor != 'dependabot[bot]' &&
       github.actor != 'github-actions[bot]' &&
       (
         (github.event_name == 'issue_comment' &&
-         contains(github.event.comment.body, '@claude')) ||
+         contains(github.event.comment.body, '@claude') &&
+         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
         (github.event_name == 'issues' &&
          contains(github.event.issue.labels.*.name, 'claude')) ||
         (github.event_name == 'pull_request_review_comment' &&
-         contains(github.event.comment.body, '@claude')) ||
+         contains(github.event.comment.body, '@claude') &&
+         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
         (github.event_name == 'pull_request_review' &&
-         contains(github.event.review.body, '@claude'))
+         contains(github.event.review.body, '@claude') &&
+         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
       )
     permissions:
       contents: write
@@ -48,16 +54,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # 許可コマンドを明示的にホワイトリスト指定（セキュリティ上必須）
-          # スタックに応じて追記する（pip / cargo / go 等）
-          allowed_tools: |
-            Bash(npm run *),
-            Bash(npm test),
-            Bash(npm ci),
-            Bash(git *),
-            Read,Edit,Write,MultiEdit,Glob,Grep
-          custom_instructions: |
-            必ずTDDで実装してください（テストを先に書いてから実装する）。
-            実装後はテスト → 型チェック → リント を順番に実行し、
-            すべて通過してからPRを作成してください。
-            PRのタイトルは「[feat/fix/refactor] 機能名」の形式にしてください。
+          # v1 では allowed_tools / custom_instructions は入力として存在せず無視される。
+          # 許可ツールは claude_args の --allowedTools で明示する（セキュリティ上必須）。
+          # スタックに応じて追記する（pip / cargo / go 等）。git は破壊的な操作を含めない。
+          claude_args: |
+            --allowedTools "Bash(npm run *),Bash(npm test),Bash(npm ci),Bash(git status),Bash(git diff *),Bash(git log *),Bash(git add *),Bash(git commit *),Read,Edit,Write,MultiEdit,Glob,Grep"
+            --append-system-prompt "必ずTDDで実装してください（テストを先に書いてから実装する）。実装後はテスト → 型チェック → リント を順番に実行し、すべて通過してからPRを作成してください。PRのタイトルは「[feat/fix/refactor] 機能名」の形式にしてください。"

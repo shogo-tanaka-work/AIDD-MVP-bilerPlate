@@ -164,6 +164,26 @@ test('ドキュメント用のechoやprintfに危険例が含まれても許可�
   assert.equal(evaluateHookInput(bashInput(`printf 'example: ${example}'`)).decision, 'allow');
 });
 
+test('echo / printfの後ろに連結したコマンドは文書扱いせず判定する', () => {
+  const removal = `${'r' + 'm'} -rf ~`;
+  const denied = [
+    `echo ok && ${removal}`,
+    `echo ok & ${removal}`,
+    `printf ok\n${removal}`,
+  ];
+  for (const command of denied) {
+    assert.equal(evaluateHookInput(bashInput(command)).decision, 'deny', command);
+  }
+});
+
+test('shellのglobで秘密ファイル名を伏せた参照を拒否する', () => {
+  const env = '.' + 'env';
+  for (const command of [`cat ${env}*`, `cat ./${env}.loc?l`, `cat {${env},x}`]) {
+    assert.equal(evaluateHookInput(bashInput(command)).decision, 'deny', command);
+  }
+  assert.equal(evaluateHookInput(bashInput(`ls *.md`)).decision, 'allow');
+});
+
 test('読み取り専用のshell操作を許可する', () => {
   assert.equal(evaluateHookInput(bashInput('git diff --stat')).decision, 'allow');
 });

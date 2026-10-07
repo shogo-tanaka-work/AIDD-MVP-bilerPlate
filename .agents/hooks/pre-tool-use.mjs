@@ -49,9 +49,10 @@ const extractPatchPaths = patch => {
     .filter(Boolean);
 };
 
+// 連結（&& / & / 改行）や置換を含むと後続コマンドが本文扱いで素通りするため、単独のecho / printfに限る。
 const isDocumentationCommand = command => {
   const trimmed = command.trim();
-  return /^(?:echo|printf)\b/.test(trimmed) && !/[|;`]|\$\(/.test(trimmed);
+  return /^(?:echo|printf)\b/.test(trimmed) && !/[|;&`\n\r]|\$\(/.test(trimmed);
 };
 
 const commandBodies = (command, executable) => {
@@ -170,6 +171,10 @@ const isSensitiveGlob = value => {
     /(?:^|[/{,])(?:credentials\.json|id_(?:rsa|ed25519)|[^/{,]+\.(?:key|pem|p12|pfx))(?:$|[,*?}])/i.test(normalized);
 };
 
+// shellのglob（.env* など）で秘密ファイル名を伏せた参照も止める。globを含まない語は既存判定に任せる。
+const hasSensitiveShellGlob = command =>
+  shellWords(command).some(word => /[*?[{]/.test(word) && isSensitiveGlob(word));
+
 const result = (decision, reason = '') => ({ decision, reason });
 
 export const evaluateHookInput = input => {
@@ -182,7 +187,7 @@ export const evaluateHookInput = input => {
 
   if (toolName === 'Bash' || toolName === 'exec_command') {
     const commands = collectValuesForKeys(toolInput, new Set(['command', 'cmd']));
-    if (commands.some(isSensitiveReference)) {
+    if (commands.some(command => isSensitiveReference(command) || hasSensitiveShellGlob(command))) {
       return result('deny', '秘密情報ファイルへのshellアクセスをブロックしました。');
     }
     if (commands.some(isBroadShellContentSearch)) {
