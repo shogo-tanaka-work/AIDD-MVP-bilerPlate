@@ -175,6 +175,10 @@ const isSensitiveGlob = value => {
 const hasSensitiveShellGlob = command =>
   shellWords(command).some(word => /[*?[{]/.test(word) && isSensitiveGlob(word));
 
+// `.e""nv` や `.e\nv` のように、クォート・バックスラッシュで名前を分割した参照を復元する。
+// 変数展開やeval経由の参照は静的に追えないため、permissions（ask / deny）とsandboxに任せる。
+const revealQuotedNames = command => command.replace(/(['"])\1|\\(?=\S)/g, '');
+
 const result = (decision, reason = '') => ({ decision, reason });
 
 export const evaluateHookInput = input => {
@@ -187,7 +191,8 @@ export const evaluateHookInput = input => {
 
   if (toolName === 'Bash' || toolName === 'exec_command') {
     const commands = collectValuesForKeys(toolInput, new Set(['command', 'cmd']));
-    if (commands.some(command => isSensitiveReference(command) || hasSensitiveShellGlob(command))) {
+    const revealed = commands.flatMap(command => [command, revealQuotedNames(command)]);
+    if (revealed.some(command => isSensitiveReference(command) || hasSensitiveShellGlob(command))) {
       return result('deny', '秘密情報ファイルへのshellアクセスをブロックしました。');
     }
     if (commands.some(isBroadShellContentSearch)) {
