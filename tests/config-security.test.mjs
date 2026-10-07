@@ -74,6 +74,8 @@ test('Codex PostToolUse hookはproject rootをAIDD_PROJECT_DIRとして渡す', 
     const result = spawnSync('bash', ['-c', command], {
       cwd: nested,
       encoding: 'utf8',
+      // root解決を確かめるため、既定では無効なlint実行をopt-inする。
+      env: { ...process.env, AIDD_POST_EDIT_VALIDATE: '1' },
       input: JSON.stringify({ tool_name: 'apply_patch', tool_input: { patch: '*** Begin Patch\n*** Update File: src/a.ts\n*** End Patch' } }),
     });
     assert.equal(result.status, 2, result.stderr);
