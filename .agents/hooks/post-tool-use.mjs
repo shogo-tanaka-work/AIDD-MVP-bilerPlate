@@ -99,8 +99,9 @@ export const planChecks = ({ root, paths, env = process.env }) => {
 
   const pythonFiles = paths.filter(target => PYTHON_FILE.test(target));
   if (pythonFiles.length > 0 && existsSync(path.join(root, 'pyproject.toml'))) {
-    // `-`始まりのpathをoptionとして解釈させない。
-    checks.push(['python3', '-m', 'compileall', '-q', '--', ...pythonFiles]);
+    // -I: cwdをimport pathへ入れず、project内の compileall.py 等を読み込ませない。
+    // --: `-`始まりのpathをoptionとして解釈させない。
+    checks.push(['python3', '-I', '-m', 'compileall', '-q', '--', ...pythonFiles]);
   }
 
   return { checks: checks.slice(0, MAX_CHECKS), notes };

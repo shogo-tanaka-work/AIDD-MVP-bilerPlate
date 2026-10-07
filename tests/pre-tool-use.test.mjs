@@ -184,6 +184,14 @@ test('shellのglobで秘密ファイル名を伏せた参照を拒否する', ()
   assert.equal(evaluateHookInput(bashInput(`ls *.md`)).decision, 'allow');
 });
 
+test('クォートやバックスラッシュで分割した秘密ファイル名を拒否する', () => {
+  const head = '.e';
+  for (const command of [`cat ${head}""nv`, `cat ${head}''nv`, `cat ${head}\\nv`, `cat ./${head}nv.l""ocal`]) {
+    assert.equal(evaluateHookInput(bashInput(command)).decision, 'deny', command);
+  }
+  assert.equal(evaluateHookInput(bashInput('git commit -m "fix: \\"quoted\\" text"')).decision, 'allow');
+});
+
 test('読み取り専用のshell操作を許可する', () => {
   assert.equal(evaluateHookInput(bashInput('git diff --stat')).decision, 'allow');
 });
