@@ -88,7 +88,7 @@ test('環境変数で無効化できる', async () => {
 test('Pythonプロジェクトでは変更ファイルの構文チェックだけを予定する', async () => {
   await withProject({ 'pyproject.toml': '' }, root => {
     const { checks } = planChecks({ root, paths: ['app/main.py'], env: {} });
-    assert.deepEqual(checks, [['python3', '-m', 'compileall', '-q', '--', 'app/main.py']]);
+    assert.deepEqual(checks, [['python3', '-I', '-m', 'compileall', '-q', '--', 'app/main.py']]);
   });
 });
 
