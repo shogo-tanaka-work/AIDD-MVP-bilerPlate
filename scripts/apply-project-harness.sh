@@ -398,9 +398,12 @@ echo ""
 place_file "AGENTS.md"
 place_file "aidd.yml"
 place_file ".env.example"
-place_file "docs/SPEC.md"
-place_file "docs/ARCH.md"
-place_file "docs/GITHUB_SETUP.md"
+place_file "docs/目次.md"
+place_file "docs/01_仕様/仕様.md"
+place_file "docs/02_アーキテクチャ/システム構成.md"
+place_file "docs/02_アーキテクチャ/設計判断の記録.md"
+place_file "docs/04_セットアップ/初期セットアップ.md"
+place_file "docs/04_セットアップ/GitHub設定.md"
 place_file ".agents/memory/MEMORY.md"
 
 while IFS= read -r rule; do
@@ -460,4 +463,4 @@ if [ ! -d "$TARGET/.git" ]; then
   echo ""
   echo "次の手順: git init -b main && git add -A && git commit"
 fi
-echo "docs/SPEC.md を書いてから実装を始めてください。"
+echo "docs/01_仕様/仕様.md を書いてから実装を始めてください。"

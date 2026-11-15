@@ -2,12 +2,13 @@
 
 ## 最初に確認するもの
 
-1. `docs/SPEC.md` — 仕様と技術スタック
-2. `docs/ARCH.md` — アーキテクチャ判断
-3. `.agents/rules/` — 共通ルールと採用profile
-4. `.agents/memory/MEMORY.md` — このプロジェクト固有の継続情報
+1. `docs/目次.md` — docs の全体（構成と書き方は `.agents/skills/project-docs/`）
+2. `docs/01_仕様/仕様.md` — 仕様と技術スタック
+3. `docs/02_アーキテクチャ/設計判断の記録.md` — アーキテクチャ判断
+4. `.agents/rules/` — 共通ルールと採用profile
+5. `.agents/memory/MEMORY.md` — このプロジェクト固有の継続情報
 
-作業単位が完了したら`.agents/memory/MEMORY.md`の現在地・次にやること・未解決の課題を更新する。仕様と設計判断は`docs/`が正本なので、memoryへ二重に書かない。
+作業単位が完了したら`.agents/memory/MEMORY.md`の現在地・次にやること・未解決の課題を更新する。仕様と設計判断は`docs/`が正本なので、memoryへ二重に書かない。仕様・処理の流れ・運用手順・設計判断を変えたら、同じ変更で`docs/`の該当ページと確認日を直す。
 
 ## 作業原則
 

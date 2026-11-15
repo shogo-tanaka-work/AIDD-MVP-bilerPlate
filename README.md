@@ -27,9 +27,10 @@ npm run build     # ビルド
 
 ## 技術スタック
 
-詳細は [docs/SPEC.md](docs/SPEC.md) を参照。
+詳細は [仕様](docs/01_仕様/仕様.md) を参照。
 
 ## ドキュメント
 
-- [仕様書](docs/SPEC.md)
-- [アーキテクチャ決定記録](docs/ARCH.md)
+- [目次](docs/目次.md)
+- [仕様](docs/01_仕様/仕様.md)
+- [設計判断の記録](docs/02_アーキテクチャ/設計判断の記録.md)
