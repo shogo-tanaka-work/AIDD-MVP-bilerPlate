@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         ## 使い方
-        1. 下の欄に `docs/SPEC.md` の内容を貼り付ける
+        1. 下の欄に `docs/01_仕様/仕様.md` の内容を貼り付ける
         2. イシューを作成する
         3. コメントで `@claude 初期セットアップを実行してください` と書く
         4. Claude がプロジェクト全体を自動構築する
@@ -14,8 +14,8 @@ body:
   - type: textarea
     id: spec_content
     attributes:
-      label: SPEC.md の内容（コピペ）
-      description: docs/SPEC.md の内容をそのまま貼り付けてください
+      label: 仕様.md の内容（コピペ）
+      description: docs/01_仕様/仕様.md の内容をそのまま貼り付けてください
       placeholder: |
         # [アプリ名] MVP仕様
         ## 目的

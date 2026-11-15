@@ -26,7 +26,7 @@ const withFixture = async callback => {
 test('ボイラープレートの整合性検査が成功する', async () => {
   const report = await verifyHarness(repoRoot);
   assert.equal(report.ok, true, JSON.stringify(report.issues, null, 2));
-  assert.equal(report.summary.skills.declared, 55);
+  assert.equal(report.summary.skills.declared, 56);
   assert.equal(report.summary.agents.claude, 4);
   assert.equal(report.summary.agents.codex, 4);
 });
